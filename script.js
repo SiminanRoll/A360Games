@@ -2,6 +2,10 @@
 const scenes = Array.from(document.querySelectorAll('.scene'));
 const progressFill = document.getElementById('progressFill');
 const controlCopy = document.getElementById('controlCopy');
+const notificationField = document.getElementById('notificationField');
+const notifyTemplateA = document.getElementById('notifyTemplateA');
+const notifyTemplateB = document.getElementById('notifyTemplateB');
+const notifyTemplateC = document.getElementById('notifyTemplateC');
 const skipBtn = document.getElementById('skipBtn');
 const startBtn = document.getElementById('startBtn');
 const experience = document.getElementById('experience');
@@ -89,6 +93,7 @@ let sceneTimer = null;
 let progressTimer = null;
 let progressStart = 0;
 let progressDuration = 0;
+let notifyInterval = null;
 
 let currentQuestion = 0;
 let answered = false;
@@ -128,11 +133,49 @@ function chord(freqs, options = {}) {
   freqs.forEach((f, i) => tone({ ...options, frequency: f, delay: (options.delay || 0) + i * 0.02 }));
 }
 
+
+function setControlCopy(text) {
+  if (controlCopy) controlCopy.textContent = text;
+}
+function setProgressWidth(value) {
+  if (progressFill) progressFill.style.width = value;
+}
+function clearNotifications() {
+  if (!notificationField) return;
+  Array.from(notificationField.querySelectorAll('.notify-card.live')).forEach((el) => el.remove());
+  if (notifyInterval) {
+    clearInterval(notifyInterval);
+    notifyInterval = null;
+  }
+}
+function spawnNotificationBubble() {
+  if (!notificationField) return;
+  const templates = [notifyTemplateA, notifyTemplateB, notifyTemplateC].filter(Boolean);
+  if (!templates.length) return;
+  const template = templates[Math.floor(Math.random() * templates.length)];
+  const clone = template.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.add('live');
+  const maxLeft = window.innerWidth - 280;
+  const maxTop = window.innerHeight - 180;
+  const x = Math.max(24, Math.floor(Math.random() * Math.max(80, maxLeft)));
+  const y = Math.max(90, Math.floor(Math.random() * Math.max(160, maxTop)));
+  clone.style.left = `${x}px`;
+  clone.style.top = `${y}px`;
+  notificationField.appendChild(clone);
+  setTimeout(() => clone.remove(), 2200);
+}
+function startNotificationBubbles() {
+  clearNotifications();
+  spawnNotificationBubble();
+  notifyInterval = setInterval(spawnNotificationBubble, 900);
+}
+
 function activateScene(index) {
   if (index > scenes.length - 1) return;
   scenes.forEach((scene, i) => scene.classList.toggle('active', i === index));
   currentScene = index;
-  controlCopy.textContent = SCENES[index].label;
+  setControlCopy(SCENES[index].label);
 
   if (index === 1 && laptop) {
     laptop.classList.remove('closed');
@@ -142,6 +185,9 @@ function activateScene(index) {
 
   if (index === 0) {
     chord([220, 330, 440], { type: 'triangle', duration: 1.0, gain: 0.010 });
+    startNotificationBubbles();
+  } else {
+    clearNotifications();
   }
   if (index === 1) {
     tone({ frequency: 250, type: 'triangle', duration: 0.2, gain: 0.03 });
@@ -165,18 +211,18 @@ function activateScene(index) {
     startProgress(duration);
     sceneTimer = setTimeout(() => activateScene(index + 1), duration);
   } else {
-    progressFill.style.width = index === 0 ? '0%' : '100%';
+    setProgressWidth(index === 0 ? '0%' : '100%');
   }
 }
 
 function startProgress(duration) {
   progressStart = performance.now();
   progressDuration = duration;
-  progressFill.style.width = '0%';
+  setProgressWidth('0%');
   progressTimer = setInterval(() => {
     const elapsed = performance.now() - progressStart;
     const pct = Math.min(100, (elapsed / progressDuration) * 100);
-    progressFill.style.width = pct + '%';
+    setProgressWidth(pct + '%');
     if (pct >= 100) clearInterval(progressTimer);
   }, 40);
 }
@@ -184,7 +230,7 @@ function startProgress(duration) {
 function beginIntroSequence() {
   if (introStarted) return;
   introStarted = true;
-  controlCopy.textContent = 'Intro running…';
+  setControlCopy('Intro running…');
   activateScene(1);
 }
 
@@ -192,12 +238,13 @@ function finishIntro() {
   introDone = true;
   clearTimeout(sceneTimer);
   clearInterval(progressTimer);
-  controlCopy.textContent = 'Intro complete. Spot the Phish is ready.';
-  progressFill.style.width = '100%';
+  setControlCopy('Intro complete. Spot the Phish is ready.');
+  setProgressWidth('100%');
   activateScene(3);
 }
 
 function showGame() {
+  clearNotifications();
   finishIntro();
   experience.classList.add('hidden');
   gameScreen.classList.remove('hidden');

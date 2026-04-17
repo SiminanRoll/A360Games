@@ -26,31 +26,34 @@
         
 <section class="scene scene-1 active" data-scene="1">
   <div class="backdrop city-glow"></div>
-  <div class="signal-grid"></div>
+  
+<div class="signal-grid"></div>
   <div class="data-ring ring-one"></div>
   <div class="data-ring ring-two"></div>
-  <div class="message-float float-a">
-    <div class="float-dot"></div>
-    <div class="float-copy">
-      <strong>Inbox activity</strong>
-      <span>3 new messages detected</span>
-    </div>
-  </div>
-  <div class="message-float float-b">
-    <div class="float-dot amber"></div>
-    <div class="float-copy">
-      <strong>Urgent request</strong>
-      <span>Review before you click</span>
-    </div>
-  </div>
-  <div class="message-float float-c">
-    <div class="float-dot purple"></div>
-    <div class="float-copy">
-      <strong>Email challenge</strong>
-      <span>Can your team spot it?</span>
-    </div>
-  </div>
   <div class="hero-beam"></div>
+  <div class="notification-field" id="notificationField" aria-hidden="true">
+    <div class="notify-card notify-template cyan" id="notifyTemplateA">
+      <div class="float-dot"></div>
+      <div class="float-copy">
+        <strong>Inbox activity</strong>
+        <span>3 new messages detected</span>
+      </div>
+    </div>
+    <div class="notify-card notify-template amber" id="notifyTemplateB">
+      <div class="float-dot amber"></div>
+      <div class="float-copy">
+        <strong>Urgent request</strong>
+        <span>Review before you click</span>
+      </div>
+    </div>
+    <div class="notify-card notify-template purple" id="notifyTemplateC">
+      <div class="float-dot purple"></div>
+      <div class="float-copy">
+        <strong>Email challenge</strong>
+        <span>Can your team spot it?</span>
+      </div>
+    </div>
+  </div>
   <div class="caption intro-center show">
     <div class="eyebrow">Monday • 8:42 AM</div>
     <h1>Just another normal morning.</h1>
@@ -138,13 +141,6 @@
           </div>
         </section>
       </main>
-
-      <footer class="controls">
-        <div class="progress">
-          <span class="progress-fill" id="progressFill"></span>
-        </div>
-        <div class="control-copy" id="controlCopy">Intro running…</div>
-      </footer>
     </div>
 
     <section class="game-screen hidden" id="gameScreen">
