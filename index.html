@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -207,8 +209,16 @@
                   <strong id="finalScore">0 / 3</strong>
                 </div>
                 <div class="final-stat-card">
-                  <span class="final-stat-label">Typical Team Score</span>
-                  <strong id="typicalScore">2 / 3</strong>
+                  <span class="final-stat-label">Average Score</span>
+                  <strong id="averageScore">--</strong>
+                </div>
+                <div class="final-stat-card">
+                  <span class="final-stat-label">Total Attempts</span>
+                  <strong id="totalAttempts">--</strong>
+                </div>
+                <div class="final-stat-card">
+                  <span class="final-stat-label">Perfect Score Rate</span>
+                  <strong id="perfectScoreRate">--</strong>
                 </div>
               </div>
             </div>
@@ -217,6 +227,7 @@
               <div class="eyebrow">What people typically choose</div>
               <h3>Response Breakdown</h3>
               <p>This shows the average pattern across all three scenarios.</p>
+              <p class="live-stats-status" id="liveStatsStatus">Live stats will appear here once Supabase is connected.</p>
               <div class="aggregate-chart" id="aggregateChart"></div>
             </div>
 
@@ -229,7 +240,7 @@
             <div class="comment-panel">
               <div class="eyebrow">Leave a comment for Patric</div>
               <h3>Share feedback or suggest the next topic</h3>
-              <p>Your response will be sent to Patric when you submit it. If you have an idea for the next topic or poll, let him know here.</p>
+              <p>Your response can be saved and emailed to Patric once your Supabase edge function is connected. If you have an idea for the next topic or poll, let him know here.</p>
               <textarea id="commentMessage" class="comment-textarea" placeholder="Share feedback, a question, or your idea for the next challenge..."></textarea>
               <div class="comment-actions">
                 <button class="ghost-btn" id="restartFromFinalBtn">Play Again</button>

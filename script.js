@@ -35,8 +35,10 @@ const restartFromFinalBtn = document.getElementById('restartFromFinalBtn');
 const submitCommentBtn = document.getElementById('submitCommentBtn');
 const commentMessage = document.getElementById('commentMessage');
 const commentConfirmation = document.getElementById('commentConfirmation');
-const finalChartDescription = document.querySelector('.final-chart-panel p');
-
+const averageScoreEl = document.getElementById('averageScore');
+const totalAttemptsEl = document.getElementById('totalAttempts');
+const perfectScoreRateEl = document.getElementById('perfectScoreRate');
+const liveStatsStatus = document.getElementById('liveStatsStatus');
 
 const SCENES = [
   { index: 0, duration: 999999, label: 'Click to begin…' },
@@ -84,7 +86,7 @@ const QUESTIONS = [
   }
 ];
 
-const TYPICAL_TEAM_SCORE = 2;
+const FALLBACK_TYPICAL_TEAM_SCORE = 2;
 
 const FISH = [
   "./assets/fish1.png",
@@ -111,16 +113,179 @@ let answered = false;
 let totalAnswered = 0;
 let totalCorrect = 0;
 let selectedAnswers = [];
-let resultSubmitted = false;
-let liveStats = null;
-const sessionId = (() => {
+let resultSubmittedForRun = false;
+
+const APP_CONFIG = window.SPOT_THE_PHISH_CONFIG || {};
+let supabaseClient = null;
+
+function getSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  const hasConfig = APP_CONFIG.supabaseUrl && APP_CONFIG.supabaseAnonKey;
+  const supabaseGlobal = window.supabase;
+  if (!hasConfig || !supabaseGlobal?.createClient) return null;
+  supabaseClient = supabaseGlobal.createClient(APP_CONFIG.supabaseUrl, APP_CONFIG.supabaseAnonKey);
+  return supabaseClient;
+}
+
+function getSessionId() {
   const key = 'spotThePhishSessionId';
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const created = (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
-  window.localStorage.setItem(key, created);
-  return created;
-})();
+  let value = localStorage.getItem(key);
+  if (!value) {
+    value = `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(key, value);
+  }
+  return value;
+}
+
+function setLiveStatsStatus(message, variant = '') {
+  if (!liveStatsStatus) return;
+  liveStatsStatus.textContent = message;
+  liveStatsStatus.classList.remove('ready', 'warning', 'error');
+  if (variant) liveStatsStatus.classList.add(variant);
+}
+
+function getFallbackAggregateBreakdown() {
+  const aggregate = { A: 0, B: 0, C: 0 };
+  QUESTIONS.forEach((q) => q.choices.forEach((choice) => { aggregate[choice.id] += choice.votes; }));
+  return aggregate;
+}
+
+function getFallbackStats() {
+  return {
+    totalAttempts: 100,
+    averageScore: FALLBACK_TYPICAL_TEAM_SCORE,
+    perfectScoreRate: 34,
+    aggregate: getFallbackAggregateBreakdown(),
+    feedbackCount: 0
+  };
+}
+
+function renderAggregateChart(aggregate) {
+  const total = Object.values(aggregate).reduce((sum, value) => sum + value, 0) || 1;
+  aggregateChart.innerHTML = '';
+  [
+    { id: 'A', label: 'Option A average' },
+    { id: 'B', label: 'Option B average' },
+    { id: 'C', label: 'Option C average' },
+  ].forEach((item) => {
+    const pct = Math.round(((aggregate[item.id] || 0) / total) * 100);
+    const row = document.createElement('div');
+    row.className = 'aggregate-row';
+    row.innerHTML = `
+      <div class="aggregate-label">${item.label}</div>
+      <div class="aggregate-bar"><div class="aggregate-fill" style="width:${pct}%"></div></div>
+      <div class="aggregate-value">${pct}%</div>
+    `;
+    aggregateChart.appendChild(row);
+  });
+}
+
+function renderLiveStats(stats) {
+  const averageScore = Number.isFinite(stats.averageScore) ? stats.averageScore : 0;
+  if (averageScoreEl) averageScoreEl.textContent = `${averageScore.toFixed(1)} / ${QUESTIONS.length}`;
+  if (totalAttemptsEl) totalAttemptsEl.textContent = `${stats.totalAttempts}`;
+  if (perfectScoreRateEl) perfectScoreRateEl.textContent = `${Math.round(stats.perfectScoreRate)}%`;
+  if (typicalScore) typicalScore.textContent = `${averageScore.toFixed(1)} / ${QUESTIONS.length}`;
+  renderAggregateChart(stats.aggregate);
+}
+
+async function submitQuizResult() {
+  if (resultSubmittedForRun) return;
+  const client = getSupabaseClient();
+  if (!client) return;
+
+  const payload = {
+    session_id: getSessionId(),
+    score: totalCorrect,
+    total_questions: QUESTIONS.length,
+    answers_json: selectedAnswers
+  };
+
+  const { error } = await client.from('quiz_submissions').insert(payload);
+  if (error) throw error;
+  resultSubmittedForRun = true;
+}
+
+async function loadLiveStats() {
+  const client = getSupabaseClient();
+  if (!client) {
+    setLiveStatsStatus('Showing built-in demo stats. Add Supabase credentials in config.js for live totals.', 'warning');
+    return getFallbackStats();
+  }
+
+  const [{ data: submissions, error: submissionsError }, { data: feedback, error: feedbackError }] = await Promise.all([
+    client.from('quiz_submissions').select('score,total_questions,answers_json'),
+    client.from('quiz_feedback').select('id')
+  ]);
+
+  if (submissionsError) throw submissionsError;
+  if (feedbackError) throw feedbackError;
+
+  const submissionRows = submissions || [];
+  if (!submissionRows.length) {
+    setLiveStatsStatus('Live connection is ready. Stats will grow as people complete the challenge.', 'ready');
+    return { totalAttempts: 0, averageScore: 0, perfectScoreRate: 0, aggregate: { A: 0, B: 0, C: 0 }, feedbackCount: (feedback || []).length };
+  }
+
+  const totalAttempts = submissionRows.length;
+  const totalScore = submissionRows.reduce((sum, row) => sum + (Number(row.score) || 0), 0);
+  const perfectScores = submissionRows.filter((row) => Number(row.score) === QUESTIONS.length).length;
+  const aggregate = { A: 0, B: 0, C: 0 };
+
+  submissionRows.forEach((row) => {
+    const answers = Array.isArray(row.answers_json) ? row.answers_json : [];
+    answers.forEach((answerId) => {
+      if (aggregate[answerId] !== undefined) aggregate[answerId] += 1;
+    });
+  });
+
+  setLiveStatsStatus(`Live stats loaded from Supabase. ${totalAttempts} completed attempt${totalAttempts === 1 ? '' : 's'} so far.`, 'ready');
+  return {
+    totalAttempts,
+    averageScore: totalScore / totalAttempts,
+    perfectScoreRate: (perfectScores / totalAttempts) * 100,
+    aggregate,
+    feedbackCount: (feedback || []).length
+  };
+}
+
+async function submitFeedbackMessage(message) {
+  const client = getSupabaseClient();
+  if (!client) return { ok: false, mode: 'fallback' };
+
+  const feedbackPayload = {
+    session_id: getSessionId(),
+    score: totalCorrect,
+    answers_json: selectedAnswers,
+    message
+  };
+
+  const { error: insertError } = await client.from('quiz_feedback').insert(feedbackPayload);
+  if (insertError) throw insertError;
+
+  if (APP_CONFIG.supabaseFeedbackFunctionUrl) {
+    const response = await fetch(APP_CONFIG.supabaseFeedbackFunctionUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        siteLabel: APP_CONFIG.siteLabel || 'Spot the Phish',
+        sessionId: getSessionId(),
+        score: `${totalCorrect}/${QUESTIONS.length}`,
+        answers: selectedAnswers,
+        message
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || 'Feedback email function failed');
+    }
+
+    return { ok: true, mode: 'email' };
+  }
+
+  return { ok: true, mode: 'saved' };
+}
 
 function getFish() {
   const options = FISH.filter((f) => f !== lastFish);
@@ -150,84 +315,6 @@ function swimFish(el, topRange) {
   });
 
   setTimeout(() => swimFish(el, topRange), 10500);
-}
-
-
-function getFallbackQuestionBreakdowns() {
-  return QUESTIONS.map((q) => {
-    const total = q.choices.reduce((sum, choice) => sum + choice.votes, 0);
-    const breakdown = { A: 0, B: 0, C: 0 };
-    q.choices.forEach((choice) => {
-      breakdown[choice.id] = Math.round((choice.votes / total) * 100);
-    });
-    return breakdown;
-  });
-}
-
-function getCurrentStats() {
-  return liveStats || {
-    totalAttempts: 0,
-    feedbackCount: 0,
-    averageScore: 2,
-    roundedAverageScore: 2,
-    perfectScoreRate: 0,
-    hardestQuestion: 3,
-    aggregateBreakdown: { A: 34, B: 33, C: 33 },
-    questionBreakdowns: getFallbackQuestionBreakdowns()
-  };
-}
-
-async function fetchLiveStats() {
-  try {
-    const response = await fetch('/api/quiz-stats');
-    if (!response.ok) throw new Error('Stats request failed');
-    liveStats = await response.json();
-  } catch (error) {
-    console.warn('Using fallback quiz stats.', error);
-  }
-}
-
-async function submitQuizResult(feedback = '') {
-  if (resultSubmitted && !feedback) return getCurrentStats();
-
-  try {
-    const response = await fetch('/api/quiz-result', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId,
-        score: totalCorrect,
-        totalQuestions: QUESTIONS.length,
-        answers: selectedAnswers,
-        feedback
-      })
-    });
-    if (!response.ok) throw new Error('Submit failed');
-    const payload = await response.json();
-    if (payload?.stats) liveStats = payload.stats;
-    resultSubmitted = true;
-    return payload;
-  } catch (error) {
-    console.error('Could not submit quiz result.', error);
-    return { ok: false, stats: getCurrentStats() };
-  }
-}
-
-async function submitFeedback(message) {
-  try {
-    const response = await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, feedback: message })
-    });
-    if (!response.ok) throw new Error('Feedback submit failed');
-    const payload = await response.json();
-    if (payload?.stats) liveStats = payload.stats;
-    return payload;
-  } catch (error) {
-    console.error('Could not submit feedback.', error);
-    return { ok: false, emailed: false };
-  }
 }
 
 function initAudio() {
@@ -421,8 +508,8 @@ function handleChoice(choiceId) {
   if (answered) return;
   answered = true;
   totalAnswered += 1;
-  const q = QUESTIONS[currentQuestion];
   selectedAnswers[currentQuestion] = choiceId;
+  const q = QUESTIONS[currentQuestion];
   const isCorrect = choiceId === q.correct;
   if (isCorrect) totalCorrect += 1;
 
@@ -437,16 +524,13 @@ function handleChoice(choiceId) {
   resultHeadline.textContent = isCorrect ? 'Nice catch.' : 'That one slips by a lot of teams.';
   resultBody.textContent = q.insight;
   statGrid.innerHTML = '';
-  const stats = getCurrentStats();
-  const breakdown = stats.questionBreakdowns?.[currentQuestion] || getFallbackQuestionBreakdowns()[currentQuestion];
   q.choices.forEach((choice) => {
-    const pct = Number(breakdown?.[choice.id] ?? choice.votes);
     const row = document.createElement('div');
     row.className = 'stat-row';
     row.innerHTML = `
       <div class="stat-label">${choice.id}</div>
-      <div class="stat-bar"><div class="stat-fill" style="width:${pct}%"></div></div>
-      <div class="stat-value">${pct}%</div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${choice.votes}%"></div></div>
+      <div class="stat-value">${choice.votes}%</div>
     `;
     statGrid.appendChild(row);
   });
@@ -464,40 +548,32 @@ function handleChoice(choiceId) {
 }
 
 async function showFinalScreen() {
-  await submitQuizResult('');
-  const stats = getCurrentStats();
-  const roundedTypical = Math.max(0, Math.min(QUESTIONS.length, Math.round(stats.averageScore)));
-
   finalHeadline.textContent = `You spotted ${totalCorrect} of ${QUESTIONS.length} phish.`;
-  finalSummary.textContent = `Live results so far: ${stats.totalAttempts} attempt${stats.totalAttempts === 1 ? '' : 's'}, ${stats.perfectScoreRate}% perfect scores, and Question ${stats.hardestQuestion} is missed the most.`;
+  finalSummary.textContent = 'Thanks for taking the poll. Loading live comparison data now.';
   finalScore.textContent = `${totalCorrect} / ${QUESTIONS.length}`;
-  typicalScore.textContent = `${roundedTypical} / ${QUESTIONS.length}`;
+  if (typicalScore) typicalScore.textContent = `-- / ${QUESTIONS.length}`;
   finalScorePill.textContent = `Final Score ${totalCorrect} / ${QUESTIONS.length}`;
-  if (finalChartDescription) {
-    finalChartDescription.textContent = `Updated from saved submissions. Average score is ${stats.roundedAverageScore} out of ${QUESTIONS.length}.`;
-  }
 
-  const aggregate = stats.aggregateBreakdown || { A: 34, B: 33, C: 33 };
-  aggregateChart.innerHTML = '';
-  [
-    { id: 'A', label: 'Option A average' },
-    { id: 'B', label: 'Option B average' },
-    { id: 'C', label: 'Option C average' },
-  ].forEach((item) => {
-    const pct = Number(aggregate[item.id] || 0);
-    const row = document.createElement('div');
-    row.className = 'aggregate-row';
-    row.innerHTML = `
-      <div class="aggregate-label">${item.label}</div>
-      <div class="aggregate-bar"><div class="aggregate-fill" style="width:${pct}%"></div></div>
-      <div class="aggregate-value">${pct}%</div>
-    `;
-    aggregateChart.appendChild(row);
-  });
+  renderLiveStats(getFallbackStats());
 
   questionStage.classList.add('hidden');
   finalStage.classList.remove('hidden');
   chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
+
+  try {
+    await submitQuizResult();
+    const stats = await loadLiveStats();
+    renderLiveStats(stats);
+    const attemptsText = stats.totalAttempts === 1 ? '1 recorded attempt' : `${stats.totalAttempts} recorded attempts`;
+    finalSummary.textContent = stats.totalAttempts
+      ? `Your team score is saved. Live stats are based on ${attemptsText}.`
+      : 'You are the first completed run. Live stats will fill in as more people take the challenge.';
+  } catch (error) {
+    console.error('Live stats error', error);
+    setLiveStatsStatus('Could not load live stats right now. Showing fallback demo numbers instead.', 'error');
+    renderLiveStats(getFallbackStats());
+    finalSummary.textContent = 'Your result is visible, but live stats could not be refreshed just now.';
+  }
 }
 
 function restartGame() {
@@ -506,7 +582,7 @@ function restartGame() {
   totalAnswered = 0;
   totalCorrect = 0;
   selectedAnswers = [];
-  resultSubmitted = false;
+  resultSubmittedForRun = false;
   if (commentMessage) commentMessage.value = '';
   if (commentConfirmation) commentConfirmation.classList.add('hidden');
   nextBtn.textContent = 'Next Question';
@@ -515,11 +591,11 @@ function restartGame() {
 
 if (skipBtn) skipBtn.addEventListener('click', finishIntro);
 if (startBtn) startBtn.addEventListener('click', showGame);
-if (nextBtn) nextBtn.addEventListener('click', async () => {
+if (nextBtn) nextBtn.addEventListener('click', () => {
   if (currentQuestion < QUESTIONS.length - 1) {
     loadQuestion(currentQuestion + 1);
   } else {
-    await showFinalScreen();
+    showFinalScreen();
   }
 });
 if (restartBtn) restartBtn.addEventListener('click', restartGame);
@@ -534,20 +610,35 @@ if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
     return;
   }
 
-  if (!resultSubmitted && selectedAnswers.length) {
-    await submitQuizResult('');
-  }
-
-  const payload = await submitFeedback(message);
   if (commentConfirmation) {
-    commentConfirmation.textContent = payload.ok
-      ? (payload.emailed
-          ? 'Thanks. Your feedback was saved and emailed successfully.'
-          : 'Thanks. Your feedback was saved. Add SMTP settings in .env to email it automatically.')
-      : 'Your feedback could not be submitted right now. Please try again.';
+    commentConfirmation.textContent = 'Sending your feedback...';
     commentConfirmation.classList.remove('hidden');
   }
-  if (payload.ok && commentMessage) commentMessage.value = '';
+
+  try {
+    const result = await submitFeedbackMessage(message);
+    if (commentConfirmation) {
+      commentConfirmation.textContent = result.mode === 'email'
+        ? 'Thanks. Your feedback was saved and emailed to Patric.'
+        : result.mode === 'saved'
+          ? 'Thanks. Your feedback was saved in Supabase. Add the edge function URL in config.js to email Patric too.'
+          : 'Thanks. Supabase is not connected yet, so this message stayed local only.';
+      commentConfirmation.classList.remove('hidden');
+    }
+    if (commentMessage) commentMessage.value = '';
+    try {
+      const stats = await loadLiveStats();
+      renderLiveStats(stats);
+    } catch (error) {
+      console.error('Feedback stats refresh failed', error);
+    }
+  } catch (error) {
+    console.error('Feedback submit failed', error);
+    if (commentConfirmation) {
+      commentConfirmation.textContent = 'Something went wrong while sending feedback. Check your Supabase table permissions and edge function URL.';
+      commentConfirmation.classList.remove('hidden');
+    }
+  }
 });
 
 window.addEventListener('pointerdown', async () => {
@@ -562,6 +653,4 @@ const gamePhish = document.getElementById("gamePhish");
 swimFish(introPhish, 70);
 swimFish(gamePhish, 15);
 
-fetchLiveStats().finally(() => {
-  activateScene(0);
-});
+activateScene(0);

@@ -1785,3 +1785,22 @@ html {
 *::-webkit-scrollbar-corner {
   background: rgba(8, 17, 27, 0.88);
 }
+
+
+.live-stats-status {
+  margin: 8px 0 18px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.live-stats-status.ready {
+  color: #8fe7ff;
+}
+
+.live-stats-status.warning {
+  color: #ffd58a;
+}
+
+.live-stats-status.error {
+  color: #ff9aa5;
+}
