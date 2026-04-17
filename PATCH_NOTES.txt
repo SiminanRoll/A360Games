@@ -1,0 +1,3 @@
+Updated config.js to use the provided feedback function URL: https://gpqbamtgaqqsczzgucel.supabase.co/functions/v1/send--feedback
+Updated script.js to send auth headers and support either supabaseFeedbackFunctionUrl or feedbackFunctionUrl.
+Added duplicate Supabase function folder at supabase/functions/send--feedback/ for convenience if you want the project files to match the deployed function name.
