@@ -17,30 +17,47 @@
       <div class="ambient-orb orb-one"></div>
       <div class="ambient-orb orb-two"></div>
       <div class="ambient-orb orb-three"></div>
-      <div class="ambient-orb orb-one"></div>
-      <div class="ambient-orb orb-two"></div>
-      <div class="ambient-orb orb-three"></div>
 
       <header class="hud">
         <button class="skip-btn" id="skipBtn">Skip Intro</button>
       </header>
 
       <main class="stage">
-        <section class="scene scene-1 active" data-scene="1">
-          <div class="backdrop city-glow"></div>
-          <div class="office-building">
-            <div class="window-grid"></div>
-            <div class="building-neon"></div>
-            <div class="entry-door"></div>
-          </div>
-          <div class="walking-path"></div>
-          <div class="path-glow"></div>
-          <div class="caption left show">
-            <div class="eyebrow">Monday • 8:42 AM</div>
-            <h1>Just another normal morning.</h1>
-            <p>Open the office. Sit down. Pull up the inbox.</p>
-          </div>
-        </section>
+        
+<section class="scene scene-1 active" data-scene="1">
+  <div class="backdrop city-glow"></div>
+  <div class="signal-grid"></div>
+  <div class="data-ring ring-one"></div>
+  <div class="data-ring ring-two"></div>
+  <div class="message-float float-a">
+    <div class="float-dot"></div>
+    <div class="float-copy">
+      <strong>Inbox activity</strong>
+      <span>3 new messages detected</span>
+    </div>
+  </div>
+  <div class="message-float float-b">
+    <div class="float-dot amber"></div>
+    <div class="float-copy">
+      <strong>Urgent request</strong>
+      <span>Review before you click</span>
+    </div>
+  </div>
+  <div class="message-float float-c">
+    <div class="float-dot purple"></div>
+    <div class="float-copy">
+      <strong>Email challenge</strong>
+      <span>Can your team spot it?</span>
+    </div>
+  </div>
+  <div class="hero-beam"></div>
+  <div class="caption intro-center show">
+    <div class="eyebrow">Monday • 8:42 AM</div>
+    <h1>Just another normal morning.</h1>
+    <p>Open the office. Sit down. Pull up the inbox.</p>
+  </div>
+  <div class="click-hint">Click anywhere to start</div>
+</section>
 
         <section class="scene scene-2" data-scene="2">
           <div class="desk-scene">
@@ -134,90 +151,96 @@
       <div class="scanlines"></div>
       <div class="vignette"></div>
 
-      <div class="game-wrap">
-        <div class="game-header">
-          <div>
-            <div class="eyebrow">Spot the Phish</div>
-            <h1>Phishing Awareness Challenge</h1>
-            <p>Choose the message you think would be most effective in a real attack.</p>
-          </div>
-          <div class="score-pill" id="scorePill">Question 1 of 3</div>
-        </div>
-
-        <div class="question-card">
-          <div class="question-topline">
-            <span class="question-label" id="questionLabel">Scenario</span>
-            <span class="vote-label">Pick one</span>
-          </div>
-          <h2 id="questionTitle">Which message would be most likely to get clicked?</h2>
-          <p id="questionPrompt">Think about what would feel most urgent or believable to a busy office team.</p>
-
-          <div class="choices" id="choices"></div>
-
-          <div class="game-actions">
-            <button class="ghost-btn hidden" id="nextBtn">Next Question</button>
-            <button class="ghost-btn hidden" id="restartBtn">Play Again</button>
-          </div>
-        </div>
-
-        <div class="results-panel hidden" id="resultsPanel">
-          <div class="eyebrow">Answer Insight</div>
-          <h3 id="resultHeadline">Nice call.</h3>
-          <p id="resultBody"></p>
-          <div class="stat-grid" id="statGrid"></div>
-        </div>
-
-
-        <div class="final-screen hidden" id="finalScreen">
-          <div class="eyebrow">Thanks for taking the challenge</div>
-          <h3 id="finalHeadline">You spotted 0 of 3 phish.</h3>
-          <p id="finalSummary">Most teams catch about 0 of 3 on their first pass.</p>
-
-          <div class="final-stat-grid">
-            <div class="final-stat-card">
-              <span class="final-stat-label">Your Score</span>
-              <strong id="finalScore">0 / 3</strong>
+      <div class="game-wrap" id="gameWrap">
+        <div class="question-stage" id="questionStage">
+          <div class="game-header">
+            <div>
+              <div class="eyebrow">Spot the Phish</div>
+              <h1>Phishing Awareness Challenge</h1>
+              <p>Choose the message you think would be most effective in a real attack.</p>
             </div>
-            <div class="final-stat-card">
-              <span class="final-stat-label">Typical Team Score</span>
-              <strong id="typicalScore">2 / 3</strong>
+            <div class="score-pill" id="scorePill">Question 1 of 3</div>
+          </div>
+
+          <div class="question-card">
+            <div class="question-topline">
+              <span class="question-label" id="questionLabel">Scenario</span>
+              <span class="vote-label">Pick one</span>
+            </div>
+            <h2 id="questionTitle">Which message would be most likely to get clicked?</h2>
+            <p id="questionPrompt">Think about what would feel most urgent or believable to a busy office team.</p>
+
+            <div class="choices" id="choices"></div>
+
+            <div class="game-actions">
+              <button class="ghost-btn hidden" id="nextBtn">Next Question</button>
+              <button class="ghost-btn hidden" id="restartBtn">Play Again</button>
             </div>
           </div>
 
-          <div class="final-advice">
-            <div class="eyebrow">Practical advice you can use today</div>
-            <p id="finalAdvice">
-              Slow down on urgency. If an email asks for passwords, payments, gift cards, account resets, or document review under pressure, verify it using a known phone number or a fresh message before you act.
-            </p>
-            <p class="email-security-note" id="emailSecurityNote">
-              Email security works best when technology and human caution work together. A quick pause is often the difference between a safe office and a preventable incident.
-            </p>
-          </div>
-
-          <div class="final-actions">
-            <button class="ghost-btn" id="leaveCommentBtn">Leave a Comment for Patric</button>
-            <button class="ghost-btn" id="restartFromFinalBtn">Play Again</button>
+          <div class="results-panel hidden" id="resultsPanel">
+            <div class="eyebrow">Answer Insight</div>
+            <h3 id="resultHeadline">Nice call.</h3>
+            <p id="resultBody"></p>
+            <div class="stat-grid" id="statGrid"></div>
           </div>
         </div>
 
-        <div class="comment-modal hidden" id="commentModal">
-          <div class="comment-modal-backdrop" id="commentBackdrop"></div>
-          <div class="comment-modal-card">
-            <div class="eyebrow">Send a note to Patric</div>
-            <h3>Comment or suggestion</h3>
-            <p>Your response will be sent to Patric when you submit it. If you have an idea for the next topic or poll, let him know here.</p>
-            <label class="comment-label" for="commentMessage">Message</label>
-            <textarea id="commentMessage" class="comment-textarea" placeholder="Share feedback, a question, or your idea for the next challenge..."></textarea>
-            <div class="comment-actions">
-              <button class="ghost-btn" id="cancelCommentBtn">Cancel</button>
-              <button class="start-btn" id="submitCommentBtn">Submit to Patric</button>
+        <div class="final-stage hidden" id="finalStage">
+          <div class="final-screen" id="finalScreen">
+            <div class="game-header final-header">
+              <div>
+                <div class="eyebrow">Spot the Phish</div>
+                <h1>Challenge Complete</h1>
+                <p>Thanks for taking the poll. Here is how you did and what other teams typically choose.</p>
+              </div>
+              <div class="score-pill final-score-pill" id="finalScorePill">Final Score 0 / 3</div>
             </div>
-            <p class="comment-confirmation hidden" id="commentConfirmation">
-              Thanks. For now this is a placeholder submission, but the message has been captured in the page and is intended to be sent to Patric once the backend is connected.
-            </p>
+
+            <div class="final-hero">
+              <div>
+                <div class="eyebrow">Thanks for taking the challenge</div>
+                <h3 id="finalHeadline">You spotted 0 of 3 phish.</h3>
+                <p id="finalSummary">Most teams catch about 0 of 3 on their first pass.</p>
+              </div>
+              <div class="final-stat-grid">
+                <div class="final-stat-card">
+                  <span class="final-stat-label">Your Score</span>
+                  <strong id="finalScore">0 / 3</strong>
+                </div>
+                <div class="final-stat-card">
+                  <span class="final-stat-label">Typical Team Score</span>
+                  <strong id="typicalScore">2 / 3</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="final-chart-panel">
+              <div class="eyebrow">What people typically choose</div>
+              <h3>Response Breakdown</h3>
+              <p>This shows the average pattern across all three scenarios.</p>
+              <div class="aggregate-chart" id="aggregateChart"></div>
+            </div>
+
+            <div class="final-advice" id="finalAdvice">
+              <div class="eyebrow">Practical advice you can use today</div>
+              <p>Slow down on urgency. If an email asks for passwords, payments, gift cards, account resets, or document review under pressure, verify it using a known phone number or a fresh message before you act.</p>
+              <p class="email-security-note" id="emailSecurityNote">Email security works best when technology and human caution work together. A quick pause is often the difference between a safe office and a preventable incident.</p>
+            </div>
+
+            <div class="comment-panel">
+              <div class="eyebrow">Leave a comment for Patric</div>
+              <h3>Share feedback or suggest the next topic</h3>
+              <p>Your response will be sent to Patric when you submit it. If you have an idea for the next topic or poll, let him know here.</p>
+              <textarea id="commentMessage" class="comment-textarea" placeholder="Share feedback, a question, or your idea for the next challenge..."></textarea>
+              <div class="comment-actions">
+                <button class="ghost-btn" id="restartFromFinalBtn">Play Again</button>
+                <button class="start-btn" id="submitCommentBtn">Submit to Patric</button>
+              </div>
+              <p class="comment-confirmation hidden" id="commentConfirmation">Thanks. For now this is a placeholder submission, but the message has been captured in the page and is intended to be sent to Patric once the backend is connected.</p>
+            </div>
           </div>
         </div>
-
       </div>
     </section>
   </div>
