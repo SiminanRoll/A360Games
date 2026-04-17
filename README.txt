@@ -35,3 +35,8 @@ Notes
 - The Supabase anon key is safe to use in the browser.
 - Do not put a Supabase service role key or Resend API key into config.js.
 - If config.js is left blank, the experience still runs using fallback demo stats.
+
+
+Feedback email note:
+- Deploy the Supabase Edge Function from supabase/functions/send-feedback/index.ts to your existing function endpoint send--feedback.
+- Keep your deployed function name as send--feedback if that is the live URL in your project.

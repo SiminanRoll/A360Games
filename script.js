@@ -263,15 +263,16 @@ async function submitFeedbackMessage(message) {
   const { error: insertError } = await client.from('quiz_feedback').insert(feedbackPayload);
   if (insertError) throw insertError;
 
-  const feedbackFunctionUrl = APP_CONFIG.supabaseFeedbackFunctionUrl || APP_CONFIG.feedbackFunctionUrl || '';
-
-  if (feedbackFunctionUrl) {
-    const response = await fetch(feedbackFunctionUrl, {
+  const feedbackUrl = APP_CONFIG.supabaseFeedbackFunctionUrl || APP_CONFIG.feedbackFunctionUrl || '';
+  if (feedbackUrl) {
+    const response = await fetch(feedbackUrl, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${APP_CONFIG.supabaseAnonKey}`,
-        'apikey': APP_CONFIG.supabaseAnonKey
+        ...(APP_CONFIG.supabaseAnonKey ? {
+          'Authorization': `Bearer ${APP_CONFIG.supabaseAnonKey}`,
+          'apikey': APP_CONFIG.supabaseAnonKey
+        } : {})
       },
       body: JSON.stringify({
         siteLabel: APP_CONFIG.siteLabel || 'Spot the Phish',

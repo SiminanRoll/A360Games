@@ -11,6 +11,13 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+
   try {
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const feedbackTo = Deno.env.get("FEEDBACK_TO_EMAIL");
@@ -22,14 +29,31 @@ Deno.serve(async (req) => {
       });
     }
 
-    const payload = await req.json();
+    const rawBody = await req.text();
+    if (!rawBody || !rawBody.trim()) {
+      return new Response(JSON.stringify({ error: "Empty request body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (_err) {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     const resend = new Resend(resendKey);
     const siteLabel = payload.siteLabel || "Spot the Phish";
     const score = payload.score ?? "n/a";
     const answers = Array.isArray(payload.answers) ? payload.answers.join(", ") : "n/a";
     const message = payload.message || "";
 
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: "Spot the Phish <onboarding@resend.dev>",
       to: [feedbackTo],
       subject: `${siteLabel} feedback submission`,
@@ -51,12 +75,12 @@ ${message}`
       });
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, data }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message || String(err) }), {
+    return new Response(JSON.stringify({ error: err?.message || String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
