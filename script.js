@@ -270,9 +270,7 @@ async function submitFeedbackMessage(message) {
       headers: {
         'Content-Type': 'application/json',
         ...(APP_CONFIG.supabaseAnonKey ? {
-          'Authorization': `Bearer ${APP_CONFIG.supabaseAnonKey}`,
-          'apikey': APP_CONFIG.supabaseAnonKey
-        } : {})
+          } : {})
       },
       body: JSON.stringify({
         siteLabel: APP_CONFIG.siteLabel || 'Spot the Phish',
