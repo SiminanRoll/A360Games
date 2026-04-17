@@ -6,6 +6,7 @@ const skipBtn = document.getElementById('skipBtn');
 const startBtn = document.getElementById('startBtn');
 const experience = document.getElementById('experience');
 const gameScreen = document.getElementById('gameScreen');
+const laptop = document.getElementById('laptop');
 
 const questionLabel = document.getElementById('questionLabel');
 const questionTitle = document.getElementById('questionTitle');
@@ -18,26 +19,23 @@ const statGrid = document.getElementById('statGrid');
 const nextBtn = document.getElementById('nextBtn');
 const restartBtn = document.getElementById('restartBtn');
 const scorePill = document.getElementById('scorePill');
-const finalScreen = document.getElementById('finalScreen');
+const questionStage = document.getElementById('questionStage');
+const finalStage = document.getElementById('finalStage');
 const finalHeadline = document.getElementById('finalHeadline');
 const finalSummary = document.getElementById('finalSummary');
 const finalScore = document.getElementById('finalScore');
 const typicalScore = document.getElementById('typicalScore');
-const finalAdvice = document.getElementById('finalAdvice');
-const emailSecurityNote = document.getElementById('emailSecurityNote');
-const leaveCommentBtn = document.getElementById('leaveCommentBtn');
+const finalScorePill = document.getElementById('finalScorePill');
+const aggregateChart = document.getElementById('aggregateChart');
 const restartFromFinalBtn = document.getElementById('restartFromFinalBtn');
-const commentModal = document.getElementById('commentModal');
-const commentBackdrop = document.getElementById('commentBackdrop');
-const cancelCommentBtn = document.getElementById('cancelCommentBtn');
 const submitCommentBtn = document.getElementById('submitCommentBtn');
 const commentMessage = document.getElementById('commentMessage');
 const commentConfirmation = document.getElementById('commentConfirmation');
 
 const SCENES = [
-  { index: 0, duration: 5200, label: 'Arrival scene…' },
-  { index: 1, duration: 4600, label: 'Desk setup…' },
-  { index: 2, duration: 5200, label: 'Inbox tension…' },
+  { index: 0, duration: 999999, label: 'Click to begin…' },
+  { index: 1, duration: 4200, label: 'Desk setup…' },
+  { index: 2, duration: 4600, label: 'Inbox tension…' },
   { index: 3, duration: 999999, label: 'Title card ready.' }
 ];
 
@@ -47,8 +45,7 @@ const QUESTIONS = [
     title: 'Which message would be most likely to get clicked first?',
     prompt: 'Think about urgency, familiarity, and what would feel believable during a busy workday.',
     correct: 'B',
-    insightTitle: 'Gift card scams are surprisingly effective.',
-    insight: 'They feel personal, urgent, and often appear to come from someone in authority. Busy staff may respond before slowing down to verify.',
+    insight: 'Gift card scams feel personal, urgent, and often appear to come from someone in authority. Busy staff may respond before slowing down to verify.',
     choices: [
       { id: 'A', title: 'Microsoft 365 Password Notice', text: 'Your password expires today. Click here to stay active.', tag: 'Urgent system alert', votes: 24 },
       { id: 'B', title: 'Doctor / Leadership Request', text: 'Can you grab gift cards for me real quick? I will reimburse you.', tag: 'Personal authority pressure', votes: 53 },
@@ -60,8 +57,7 @@ const QUESTIONS = [
     title: 'Which one is most likely to get someone to open the message?',
     prompt: 'Not every attack needs a click right away. Sometimes the goal is just to get attention and start a conversation.',
     correct: 'A',
-    insightTitle: 'Account-related messages reliably pull attention.',
-    insight: 'People are trained to care about account access. Even cautious users may open the message to check whether it is legitimate.',
+    insight: 'Account-related alerts reliably pull attention. Even cautious users may open the message to see if it is legitimate.',
     choices: [
       { id: 'A', title: 'Microsoft 365 Alert', text: 'Unusual sign-in detected. Review your account activity now.', tag: 'Security fear trigger', votes: 47 },
       { id: 'B', title: 'Fax from Unknown Sender', text: 'You have received a secure fax. Download attached file.', tag: 'Legacy office workflow', votes: 29 },
@@ -73,8 +69,7 @@ const QUESTIONS = [
     title: 'Which message would be easiest to miss as suspicious?',
     prompt: 'This one is about subtlety. Which attack blends into everyday work the best?',
     correct: 'C',
-    insightTitle: 'Vendor-style messages can blend in quietly.',
-    insight: 'Routine document shares and invoice-style follow-ups often slip past people because they do not feel dramatic. That low drama is exactly why they work.',
+    insight: 'Vendor-style messages can blend in quietly. Routine document shares and invoice follow-ups often slip past people because they do not feel dramatic.',
     choices: [
       { id: 'A', title: 'HR Benefits Update', text: 'Review your benefits information before end of day.', tag: 'Internal admin theme', votes: 31 },
       { id: 'B', title: 'Package Pickup Reminder', text: 'A package is waiting. Confirm delivery preferences.', tag: 'Everyday household noise', votes: 18 },
@@ -89,6 +84,7 @@ let currentScene = 0;
 let soundEnabled = true;
 let audioCtx = null;
 let introDone = false;
+let introStarted = false;
 let sceneTimer = null;
 let progressTimer = null;
 let progressStart = 0;
@@ -138,18 +134,24 @@ function activateScene(index) {
   currentScene = index;
   controlCopy.textContent = SCENES[index].label;
 
+  if (index === 1 && laptop) {
+    laptop.classList.remove('closed');
+    void laptop.offsetWidth;
+    laptop.classList.add('closed');
+  }
+
   if (index === 0) {
-    chord([220, 330, 440], { type: 'triangle', duration: 1.2, gain: 0.012 });
+    chord([220, 330, 440], { type: 'triangle', duration: 1.0, gain: 0.010 });
   }
   if (index === 1) {
     tone({ frequency: 250, type: 'triangle', duration: 0.2, gain: 0.03 });
-    tone({ frequency: 520, type: 'sine', duration: 0.25, gain: 0.02, delay: 1.7 });
+    tone({ frequency: 520, type: 'sine', duration: 0.25, gain: 0.02, delay: 1.2 });
   }
   if (index === 2) {
-    tone({ frequency: 880, type: 'sine', duration: 0.08, gain: 0.032, delay: 0.55 });
-    tone({ frequency: 780, type: 'sine', duration: 0.08, gain: 0.032, delay: 1.08 });
-    tone({ frequency: 680, type: 'sine', duration: 0.08, gain: 0.032, delay: 1.62 });
-    chord([180, 240], { type: 'sawtooth', duration: 1.8, gain: 0.006, delay: 2.2 });
+    tone({ frequency: 880, type: 'sine', duration: 0.08, gain: 0.030, delay: 0.55 });
+    tone({ frequency: 780, type: 'sine', duration: 0.08, gain: 0.030, delay: 1.08 });
+    tone({ frequency: 680, type: 'sine', duration: 0.08, gain: 0.030, delay: 1.62 });
+    chord([180, 240], { type: 'sawtooth', duration: 1.6, gain: 0.006, delay: 2.0 });
   }
   if (index === 3) {
     chord([392, 494, 587], { type: 'triangle', duration: 0.7, gain: 0.025 });
@@ -163,7 +165,7 @@ function activateScene(index) {
     startProgress(duration);
     sceneTimer = setTimeout(() => activateScene(index + 1), duration);
   } else {
-    progressFill.style.width = '100%';
+    progressFill.style.width = index === 0 ? '0%' : '100%';
   }
 }
 
@@ -179,8 +181,14 @@ function startProgress(duration) {
   }, 40);
 }
 
+function beginIntroSequence() {
+  if (introStarted) return;
+  introStarted = true;
+  controlCopy.textContent = 'Intro running…';
+  activateScene(1);
+}
+
 function finishIntro() {
-  if (introDone) return;
   introDone = true;
   clearTimeout(sceneTimer);
   clearInterval(progressTimer);
@@ -206,13 +214,15 @@ function loadQuestion(index) {
   questionTitle.textContent = q.title;
   questionPrompt.textContent = q.prompt;
   scorePill.textContent = `Question ${index + 1} of ${QUESTIONS.length}`;
+
+  questionStage.classList.remove('hidden');
+  finalStage.classList.add('hidden');
   resultsPanel.classList.add('hidden');
-  finalScreen.classList.add('hidden');
   nextBtn.classList.add('hidden');
   restartBtn.classList.add('hidden');
 
   choicesEl.innerHTML = '';
-  q.choices.forEach(choice => {
+  q.choices.forEach((choice) => {
     const button = document.createElement('button');
     button.className = 'choice-btn';
     button.type = 'button';
@@ -234,24 +244,22 @@ function handleChoice(choiceId) {
   if (answered) return;
   answered = true;
   totalAnswered += 1;
-
   const q = QUESTIONS[currentQuestion];
   const isCorrect = choiceId === q.correct;
   if (isCorrect) totalCorrect += 1;
 
-  Array.from(choicesEl.querySelectorAll('.choice-btn')).forEach(btn => {
+  Array.from(choicesEl.querySelectorAll('.choice-btn')).forEach((btn) => {
     const id = btn.dataset.choiceId;
     btn.disabled = true;
-    btn.classList.add('selected');
     if (id === q.correct) btn.classList.add('correct');
     if (id === choiceId && id !== q.correct) btn.classList.add('incorrect');
+    if (id === choiceId) btn.classList.add('selected');
   });
 
   resultHeadline.textContent = isCorrect ? 'Nice catch.' : 'That one slips by a lot of teams.';
   resultBody.textContent = q.insight;
   statGrid.innerHTML = '';
-
-  q.choices.forEach(choice => {
+  q.choices.forEach((choice) => {
     const row = document.createElement('div');
     row.className = 'stat-row';
     row.innerHTML = `
@@ -261,36 +269,48 @@ function handleChoice(choiceId) {
     `;
     statGrid.appendChild(row);
   });
-
   resultsPanel.classList.remove('hidden');
 
   if (currentQuestion < QUESTIONS.length - 1) {
     nextBtn.classList.remove('hidden');
   } else {
-    showFinalScreen();
+    nextBtn.textContent = 'See Final Results';
+    nextBtn.classList.remove('hidden');
   }
 
   tone({ frequency: isCorrect ? 640 : 240, type: isCorrect ? 'triangle' : 'sawtooth', duration: 0.25, gain: 0.03 });
   if (isCorrect) tone({ frequency: 820, type: 'sine', duration: 0.22, gain: 0.02, delay: 0.08 });
 }
 
-
 function showFinalScreen() {
-  const caughtText = totalCorrect === 1 ? 'phish' : 'phish';
   finalHeadline.textContent = `You spotted ${totalCorrect} of ${QUESTIONS.length} phish.`;
   finalSummary.textContent = `Most teams usually spot about ${TYPICAL_TEAM_SCORE} of ${QUESTIONS.length} on a first pass. Thanks for taking the poll.`;
   finalScore.textContent = `${totalCorrect} / ${QUESTIONS.length}`;
   typicalScore.textContent = `${TYPICAL_TEAM_SCORE} / ${QUESTIONS.length}`;
-  finalAdvice.innerHTML = `
-    <div class="eyebrow">Practical advice you can use today</div>
-    <p>Slow down on urgency. If an email asks for passwords, payments, gift cards, account resets, or document review under pressure, verify it with a known phone number or a fresh message before you act.</p>
-    <p class="email-security-note">Email security works best when protective tools and human caution work together. A quick pause is often the difference between a safe office and a preventable incident.</p>
-  `;
-  resultsPanel.classList.add('hidden');
-  nextBtn.classList.add('hidden');
-  restartBtn.classList.add('hidden');
-  finalScreen.classList.remove('hidden');
-  scorePill.textContent = `Final Score ${totalCorrect} / ${QUESTIONS.length}`;
+  finalScorePill.textContent = `Final Score ${totalCorrect} / ${QUESTIONS.length}`;
+
+  const aggregate = { A: 0, B: 0, C: 0 };
+  QUESTIONS.forEach((q) => q.choices.forEach((choice) => { aggregate[choice.id] += choice.votes; }));
+  const total = aggregate.A + aggregate.B + aggregate.C;
+  aggregateChart.innerHTML = '';
+  [
+    { id: 'A', label: 'Option A average' },
+    { id: 'B', label: 'Option B average' },
+    { id: 'C', label: 'Option C average' },
+  ].forEach((item) => {
+    const pct = Math.round((aggregate[item.id] / total) * 100);
+    const row = document.createElement('div');
+    row.className = 'aggregate-row';
+    row.innerHTML = `
+      <div class="aggregate-label">${item.label}</div>
+      <div class="aggregate-bar"><div class="aggregate-fill" style="width:${pct}%"></div></div>
+      <div class="aggregate-value">${pct}%</div>
+    `;
+    aggregateChart.appendChild(row);
+  });
+
+  questionStage.classList.add('hidden');
+  finalStage.classList.remove('hidden');
   chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
 }
 
@@ -299,31 +319,30 @@ function restartGame() {
   answered = false;
   totalAnswered = 0;
   totalCorrect = 0;
-  commentMessage.value = '';
-  commentConfirmation.classList.add('hidden');
-  commentModal.classList.add('hidden');
-  finalScreen.classList.add('hidden');
+  if (commentMessage) commentMessage.value = '';
+  if (commentConfirmation) commentConfirmation.classList.add('hidden');
+  nextBtn.textContent = 'Next Question';
   loadQuestion(0);
 }
 
-skipBtn.addEventListener('click', finishIntro);
-startBtn.addEventListener('click', showGame);
-nextBtn.addEventListener('click', () => loadQuestion(currentQuestion + 1));
-restartBtn.addEventListener('click', restartGame);
-restartFromFinalBtn.addEventListener('click', restartGame);
-
-leaveCommentBtn.addEventListener('click', () => {
-  commentModal.classList.remove('hidden');
-  commentConfirmation.classList.add('hidden');
-  setTimeout(() => commentMessage.focus(), 30);
+if (skipBtn) skipBtn.addEventListener('click', finishIntro);
+if (startBtn) startBtn.addEventListener('click', showGame);
+if (nextBtn) nextBtn.addEventListener('click', () => {
+  if (currentQuestion < QUESTIONS.length - 1) {
+    loadQuestion(currentQuestion + 1);
+  } else {
+    showFinalScreen();
+  }
 });
-commentBackdrop.addEventListener('click', () => commentModal.classList.add('hidden'));
-cancelCommentBtn.addEventListener('click', () => commentModal.classList.add('hidden'));
-submitCommentBtn.addEventListener('click', () => {
-  const message = commentMessage.value.trim();
+if (restartBtn) restartBtn.addEventListener('click', restartGame);
+if (restartFromFinalBtn) restartFromFinalBtn.addEventListener('click', restartGame);
+if (submitCommentBtn) submitCommentBtn.addEventListener('click', () => {
+  const message = commentMessage ? commentMessage.value.trim() : '';
   if (!message) {
-    commentConfirmation.textContent = 'Please add a quick message before you submit it to Patric.';
-    commentConfirmation.classList.remove('hidden');
+    if (commentConfirmation) {
+      commentConfirmation.textContent = 'Please add a quick message before you submit it to Patric.';
+      commentConfirmation.classList.remove('hidden');
+    }
     return;
   }
   window.__spotThePhishComments = window.__spotThePhishComments || [];
@@ -332,17 +351,17 @@ submitCommentBtn.addEventListener('click', () => {
     message,
     createdAt: new Date().toISOString()
   });
-  commentConfirmation.textContent = 'Thanks. This response is intended to be sent to Patric when the backend is connected. For now it has been captured locally in the page.';
-  commentConfirmation.classList.remove('hidden');
-  commentMessage.value = '';
-});
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') commentModal.classList.add('hidden');
+  if (commentConfirmation) {
+    commentConfirmation.textContent = 'Thanks. This response is intended to be sent to Patric when the backend is connected. For now it has been captured locally in the page.';
+    commentConfirmation.classList.remove('hidden');
+  }
+  if (commentMessage) commentMessage.value = '';
 });
 
 window.addEventListener('pointerdown', async () => {
   const ctx = initAudio();
   if (ctx?.state === 'suspended') await ctx.resume();
+  if (!introStarted && !introDone) beginIntroSequence();
 }, { once: true });
 
 activateScene(0);
