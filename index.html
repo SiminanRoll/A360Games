@@ -1,34 +1,175 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Phishing Challenge</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spot the Phish | Phishing Awareness Challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="app-shell">
+    <div class="experience" id="experience">
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
+      <div class="ambient-orb orb-one"></div>
+      <div class="ambient-orb orb-two"></div>
+      <div class="ambient-orb orb-three"></div>
+      <div class="ambient-orb orb-one"></div>
+      <div class="ambient-orb orb-two"></div>
+      <div class="ambient-orb orb-three"></div>
 
-<div class="container">
-  <h1>Which message would your team trust?</h1>
+      <header class="hud">
+        <button class="skip-btn" id="skipBtn">Skip Intro</button>
+      </header>
 
-  <div class="cards">
-    <div class="card" data-choice="A">
-      <h3>Microsoft Alert</h3>
-      <p>Password expires today. Click to stay active.</p>
+      <main class="stage">
+        <section class="scene scene-1 active" data-scene="1">
+          <div class="backdrop city-glow"></div>
+          <div class="office-building">
+            <div class="window-grid"></div>
+            <div class="building-neon"></div>
+            <div class="entry-door"></div>
+          </div>
+          <div class="walking-path"></div>
+          <div class="path-glow"></div>
+          <div class="caption left show">
+            <div class="eyebrow">Monday • 8:42 AM</div>
+            <h1>Just another normal morning.</h1>
+            <p>Open the office. Sit down. Pull up the inbox.</p>
+          </div>
+        </section>
+
+        <section class="scene scene-2" data-scene="2">
+          <div class="desk-scene">
+            <div class="window"></div>
+            <div class="plant"></div>
+            <div class="desk"></div>
+            <div class="coffee"><div class="coffee-liquid"></div><div class="coffee-steam steam-1"></div><div class="coffee-steam steam-2"></div></div>
+            <div class="chair"></div>
+            <div class="monitor-glow"></div>
+            <div class="laptop-reflection"></div>
+            <div class="laptop closed" id="laptop">
+              <div class="laptop-screen">
+                <div class="screen-glow"></div>
+              </div>
+              <div class="laptop-base"></div>
+            </div>
+          </div>
+          <div class="caption right">
+            <div class="eyebrow">Desk View</div>
+            <h2>Everything looks routine.</h2>
+            <p>One tap wakes up the screen. Then the messages start rolling in.</p>
+          </div>
+        </section>
+
+        <section class="scene scene-3" data-scene="3">
+          <div class="desk-scene tight">
+            <div class="window dim"></div>
+            <div class="desk"></div>
+            <div class="laptop-reflection reflection-tight"></div>
+            <div class="laptop open zoomed">
+              <div class="laptop-screen inbox-screen">
+                <div class="inbox-topbar">
+                  <span>Inbox</span>
+                  <span>3 new</span>
+                </div>
+                <div class="message-stack">
+                  <article class="message-card message-a">
+                    <div class="message-dot"></div>
+                    <div>
+                      <strong>Microsoft 365</strong>
+                      <p>Your password expires today.</p>
+                    </div>
+                  </article>
+                  <article class="message-card message-b">
+                    <div class="message-dot gift"></div>
+                    <div>
+                      <strong>Office Request</strong>
+                      <p>Can you grab gift cards real quick?</p>
+                    </div>
+                  </article>
+                  <article class="message-card message-c">
+                    <div class="message-dot box"></div>
+                    <div>
+                      <strong>Delivery Notice</strong>
+                      <p>Please confirm your address.</p>
+                    </div>
+                  </article>
+                </div>
+              </div>
+              <div class="laptop-base"></div>
+            </div>
+          </div>
+          <div class="center-prompt" id="centerPrompt">
+            <div class="eyebrow">3 new messages</div>
+            <h2>Which one would your team trust?</h2>
+          </div>
+        </section>
+
+        <section class="scene scene-4" data-scene="4">
+          <div class="title-burst"></div>
+          <div class="title-card">
+            <div class="eyebrow">Interactive Security Experience</div>
+            <h2>Spot the Phish</h2>
+            <h3>Can Your Team Catch It?</h3>
+            <p>A quick interactive challenge to see which message your team would trust first.</p>
+            <p class="subtle-brand">Presented by Advantage Technologies</p>
+            <button class="start-btn" id="startBtn">Enter Challenge</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="controls">
+        <div class="progress">
+          <span class="progress-fill" id="progressFill"></span>
+        </div>
+        <div class="control-copy" id="controlCopy">Intro running…</div>
+      </footer>
     </div>
 
-    <div class="card" data-choice="B">
-      <h3>Doctor Request</h3>
-      <p>Grab gift cards for me, I’ll reimburse you.</p>
-    </div>
+    <section class="game-screen hidden" id="gameScreen">
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
 
-    <div class="card" data-choice="C">
-      <h3>Delivery Notice</h3>
-      <p>Confirm address to reschedule delivery.</p>
-    </div>
+      <div class="game-wrap">
+        <div class="game-header">
+          <div>
+            <div class="eyebrow">Spot the Phish</div>
+            <h1>Phishing Awareness Challenge</h1>
+            <p>Choose the message you think would be most effective in a real attack.</p>
+          </div>
+          <div class="score-pill" id="scorePill">Question 1 of 3</div>
+        </div>
+
+        <div class="question-card">
+          <div class="question-topline">
+            <span class="question-label" id="questionLabel">Scenario</span>
+            <span class="vote-label">Pick one</span>
+          </div>
+          <h2 id="questionTitle">Which message would be most likely to get clicked?</h2>
+          <p id="questionPrompt">Think about what would feel most urgent or believable to a busy office team.</p>
+
+          <div class="choices" id="choices"></div>
+
+          <div class="game-actions">
+            <button class="ghost-btn hidden" id="nextBtn">Next Question</button>
+            <button class="ghost-btn hidden" id="restartBtn">Play Again</button>
+          </div>
+        </div>
+
+        <div class="results-panel hidden" id="resultsPanel">
+          <div class="eyebrow">Answer Insight</div>
+          <h3 id="resultHeadline">Nice call.</h3>
+          <p id="resultBody"></p>
+          <div class="stat-grid" id="statGrid"></div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <div id="result" class="hidden"></div>
-</div>
-
-<script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
