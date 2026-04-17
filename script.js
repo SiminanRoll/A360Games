@@ -35,6 +35,8 @@ const restartFromFinalBtn = document.getElementById('restartFromFinalBtn');
 const submitCommentBtn = document.getElementById('submitCommentBtn');
 const commentMessage = document.getElementById('commentMessage');
 const commentConfirmation = document.getElementById('commentConfirmation');
+const finalChartDescription = document.querySelector('.final-chart-panel p');
+
 
 const SCENES = [
   { index: 0, duration: 999999, label: 'Click to begin…' },
@@ -84,6 +86,15 @@ const QUESTIONS = [
 
 const TYPICAL_TEAM_SCORE = 2;
 
+const FISH = [
+  "./assets/fish1.png",
+  "./assets/fish2.png",
+  "./assets/fish3.png",
+  "./assets/fish4.png"
+];
+
+let lastFish = null;
+
 let currentScene = 0;
 let soundEnabled = true;
 let audioCtx = null;
@@ -99,6 +110,125 @@ let currentQuestion = 0;
 let answered = false;
 let totalAnswered = 0;
 let totalCorrect = 0;
+let selectedAnswers = [];
+let resultSubmitted = false;
+let liveStats = null;
+const sessionId = (() => {
+  const key = 'spotThePhishSessionId';
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const created = (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+  window.localStorage.setItem(key, created);
+  return created;
+})();
+
+function getFish() {
+  const options = FISH.filter((f) => f !== lastFish);
+  const pick = options[Math.floor(Math.random() * options.length)];
+  lastFish = pick;
+  return pick;
+}
+
+function swimFish(el, topRange) {
+  if (!el) return;
+  const img = el.querySelector("img");
+  if (!img) return;
+
+  img.src = getFish();
+
+  const startY = Math.random() * topRange;
+  el.style.transition = "none";
+  el.style.transform = "translateX(0)";
+  el.style.left = "-200px";
+  el.style.top = `${startY}%`;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.style.transition = "transform 10s linear";
+      el.style.transform = "translateX(120vw)";
+    });
+  });
+
+  setTimeout(() => swimFish(el, topRange), 10500);
+}
+
+
+function getFallbackQuestionBreakdowns() {
+  return QUESTIONS.map((q) => {
+    const total = q.choices.reduce((sum, choice) => sum + choice.votes, 0);
+    const breakdown = { A: 0, B: 0, C: 0 };
+    q.choices.forEach((choice) => {
+      breakdown[choice.id] = Math.round((choice.votes / total) * 100);
+    });
+    return breakdown;
+  });
+}
+
+function getCurrentStats() {
+  return liveStats || {
+    totalAttempts: 0,
+    feedbackCount: 0,
+    averageScore: 2,
+    roundedAverageScore: 2,
+    perfectScoreRate: 0,
+    hardestQuestion: 3,
+    aggregateBreakdown: { A: 34, B: 33, C: 33 },
+    questionBreakdowns: getFallbackQuestionBreakdowns()
+  };
+}
+
+async function fetchLiveStats() {
+  try {
+    const response = await fetch('/api/quiz-stats');
+    if (!response.ok) throw new Error('Stats request failed');
+    liveStats = await response.json();
+  } catch (error) {
+    console.warn('Using fallback quiz stats.', error);
+  }
+}
+
+async function submitQuizResult(feedback = '') {
+  if (resultSubmitted && !feedback) return getCurrentStats();
+
+  try {
+    const response = await fetch('/api/quiz-result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        score: totalCorrect,
+        totalQuestions: QUESTIONS.length,
+        answers: selectedAnswers,
+        feedback
+      })
+    });
+    if (!response.ok) throw new Error('Submit failed');
+    const payload = await response.json();
+    if (payload?.stats) liveStats = payload.stats;
+    resultSubmitted = true;
+    return payload;
+  } catch (error) {
+    console.error('Could not submit quiz result.', error);
+    return { ok: false, stats: getCurrentStats() };
+  }
+}
+
+async function submitFeedback(message) {
+  try {
+    const response = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, feedback: message })
+    });
+    if (!response.ok) throw new Error('Feedback submit failed');
+    const payload = await response.json();
+    if (payload?.stats) liveStats = payload.stats;
+    return payload;
+  } catch (error) {
+    console.error('Could not submit feedback.', error);
+    return { ok: false, emailed: false };
+  }
+}
 
 function initAudio() {
   if (audioCtx) return audioCtx;
@@ -292,6 +422,7 @@ function handleChoice(choiceId) {
   answered = true;
   totalAnswered += 1;
   const q = QUESTIONS[currentQuestion];
+  selectedAnswers[currentQuestion] = choiceId;
   const isCorrect = choiceId === q.correct;
   if (isCorrect) totalCorrect += 1;
 
@@ -306,13 +437,16 @@ function handleChoice(choiceId) {
   resultHeadline.textContent = isCorrect ? 'Nice catch.' : 'That one slips by a lot of teams.';
   resultBody.textContent = q.insight;
   statGrid.innerHTML = '';
+  const stats = getCurrentStats();
+  const breakdown = stats.questionBreakdowns?.[currentQuestion] || getFallbackQuestionBreakdowns()[currentQuestion];
   q.choices.forEach((choice) => {
+    const pct = Number(breakdown?.[choice.id] ?? choice.votes);
     const row = document.createElement('div');
     row.className = 'stat-row';
     row.innerHTML = `
       <div class="stat-label">${choice.id}</div>
-      <div class="stat-bar"><div class="stat-fill" style="width:${choice.votes}%"></div></div>
-      <div class="stat-value">${choice.votes}%</div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${pct}%"></div></div>
+      <div class="stat-value">${pct}%</div>
     `;
     statGrid.appendChild(row);
   });
@@ -329,23 +463,28 @@ function handleChoice(choiceId) {
   if (isCorrect) tone({ frequency: 820, type: 'sine', duration: 0.22, gain: 0.02, delay: 0.08 });
 }
 
-function showFinalScreen() {
-  finalHeadline.textContent = `You spotted ${totalCorrect} of ${QUESTIONS.length} phish.`;
-  finalSummary.textContent = `Most teams usually spot about ${TYPICAL_TEAM_SCORE} of ${QUESTIONS.length} on a first pass. Thanks for taking the poll.`;
-  finalScore.textContent = `${totalCorrect} / ${QUESTIONS.length}`;
-  typicalScore.textContent = `${TYPICAL_TEAM_SCORE} / ${QUESTIONS.length}`;
-  finalScorePill.textContent = `Final Score ${totalCorrect} / ${QUESTIONS.length}`;
+async function showFinalScreen() {
+  await submitQuizResult('');
+  const stats = getCurrentStats();
+  const roundedTypical = Math.max(0, Math.min(QUESTIONS.length, Math.round(stats.averageScore)));
 
-  const aggregate = { A: 0, B: 0, C: 0 };
-  QUESTIONS.forEach((q) => q.choices.forEach((choice) => { aggregate[choice.id] += choice.votes; }));
-  const total = aggregate.A + aggregate.B + aggregate.C;
+  finalHeadline.textContent = `You spotted ${totalCorrect} of ${QUESTIONS.length} phish.`;
+  finalSummary.textContent = `Live results so far: ${stats.totalAttempts} attempt${stats.totalAttempts === 1 ? '' : 's'}, ${stats.perfectScoreRate}% perfect scores, and Question ${stats.hardestQuestion} is missed the most.`;
+  finalScore.textContent = `${totalCorrect} / ${QUESTIONS.length}`;
+  typicalScore.textContent = `${roundedTypical} / ${QUESTIONS.length}`;
+  finalScorePill.textContent = `Final Score ${totalCorrect} / ${QUESTIONS.length}`;
+  if (finalChartDescription) {
+    finalChartDescription.textContent = `Updated from saved submissions. Average score is ${stats.roundedAverageScore} out of ${QUESTIONS.length}.`;
+  }
+
+  const aggregate = stats.aggregateBreakdown || { A: 34, B: 33, C: 33 };
   aggregateChart.innerHTML = '';
   [
     { id: 'A', label: 'Option A average' },
     { id: 'B', label: 'Option B average' },
     { id: 'C', label: 'Option C average' },
   ].forEach((item) => {
-    const pct = Math.round((aggregate[item.id] / total) * 100);
+    const pct = Number(aggregate[item.id] || 0);
     const row = document.createElement('div');
     row.className = 'aggregate-row';
     row.innerHTML = `
@@ -366,6 +505,8 @@ function restartGame() {
   answered = false;
   totalAnswered = 0;
   totalCorrect = 0;
+  selectedAnswers = [];
+  resultSubmitted = false;
   if (commentMessage) commentMessage.value = '';
   if (commentConfirmation) commentConfirmation.classList.add('hidden');
   nextBtn.textContent = 'Next Question';
@@ -374,16 +515,16 @@ function restartGame() {
 
 if (skipBtn) skipBtn.addEventListener('click', finishIntro);
 if (startBtn) startBtn.addEventListener('click', showGame);
-if (nextBtn) nextBtn.addEventListener('click', () => {
+if (nextBtn) nextBtn.addEventListener('click', async () => {
   if (currentQuestion < QUESTIONS.length - 1) {
     loadQuestion(currentQuestion + 1);
   } else {
-    showFinalScreen();
+    await showFinalScreen();
   }
 });
 if (restartBtn) restartBtn.addEventListener('click', restartGame);
 if (restartFromFinalBtn) restartFromFinalBtn.addEventListener('click', restartGame);
-if (submitCommentBtn) submitCommentBtn.addEventListener('click', () => {
+if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
   const message = commentMessage ? commentMessage.value.trim() : '';
   if (!message) {
     if (commentConfirmation) {
@@ -392,17 +533,21 @@ if (submitCommentBtn) submitCommentBtn.addEventListener('click', () => {
     }
     return;
   }
-  window.__spotThePhishComments = window.__spotThePhishComments || [];
-  window.__spotThePhishComments.push({
-    recipient: 'Patric',
-    message,
-    createdAt: new Date().toISOString()
-  });
+
+  if (!resultSubmitted && selectedAnswers.length) {
+    await submitQuizResult('');
+  }
+
+  const payload = await submitFeedback(message);
   if (commentConfirmation) {
-    commentConfirmation.textContent = 'Thanks. This response is intended to be sent to Patric when the backend is connected. For now it has been captured locally in the page.';
+    commentConfirmation.textContent = payload.ok
+      ? (payload.emailed
+          ? 'Thanks. Your feedback was saved and emailed successfully.'
+          : 'Thanks. Your feedback was saved. Add SMTP settings in .env to email it automatically.')
+      : 'Your feedback could not be submitted right now. Please try again.';
     commentConfirmation.classList.remove('hidden');
   }
-  if (commentMessage) commentMessage.value = '';
+  if (payload.ok && commentMessage) commentMessage.value = '';
 });
 
 window.addEventListener('pointerdown', async () => {
@@ -411,4 +556,12 @@ window.addEventListener('pointerdown', async () => {
   if (!introStarted && !introDone) beginIntroSequence();
 }, { once: true });
 
-activateScene(0);
+const introPhish = document.getElementById("introPhish");
+const gamePhish = document.getElementById("gamePhish");
+
+swimFish(introPhish, 70);
+swimFish(gamePhish, 15);
+
+fetchLiveStats().finally(() => {
+  activateScene(0);
+});

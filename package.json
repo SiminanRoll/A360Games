@@ -1,0 +1,14 @@
+{
+  "name": "spot-the-phish",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Spot the Phish interactive intro + phishing challenge with live stats and feedback email support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "nodemailer": "^6.10.0"
+  }
+}
