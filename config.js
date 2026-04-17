@@ -1,4 +1,5 @@
 window.SPOT_THE_PHISH_CONFIG = {
+<<<<<<< HEAD
   supabaseUrl: '',
   supabaseAnonKey: '',
 =======
