@@ -328,27 +328,13 @@ async function submitFeedbackMessage(name, message) {
   const client = getSupabaseClient();
   if (!client) return { ok: false, mode: 'fallback' };
 
-  const formattedMessage = `Name: ${name}\n\nMessage:\n${message}`;
-
-  const feedbackPayload = {
-    session_id: getSessionId(),
-    score: totalCorrect,
-    answers_json: selectedAnswers,
-    message: formattedMessage
-  };
-
-  const { error: insertError } = await client.from('quiz_feedback').insert(feedbackPayload);
-  if (insertError) throw insertError;
-
   const feedbackUrl = APP_CONFIG.supabaseFeedbackFunctionUrl || APP_CONFIG.feedbackFunctionUrl || '';
+
+  // Send email FIRST — don't let a DB insert failure block the notification
   if (feedbackUrl) {
     const response = await fetch(feedbackUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(APP_CONFIG.supabaseAnonKey ? {
-          } : {})
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         siteLabel: APP_CONFIG.siteLabel || 'Spot the Phish',
         sessionId: getSessionId(),
@@ -363,11 +349,23 @@ async function submitFeedbackMessage(name, message) {
       const errText = await response.text();
       throw new Error(errText || 'Feedback email function failed');
     }
-
-    return { ok: true, mode: 'email' };
   }
 
-  return { ok: true, mode: 'saved' };
+  // DB insert is best-effort — log failures but don't throw
+  try {
+    const feedbackPayload = {
+      session_id: getSessionId(),
+      score: totalCorrect,
+      answers_json: selectedAnswers,
+      message: `Name: ${name}\n\nMessage:\n${message}`
+    };
+    const { error: insertError } = await client.from('quiz_feedback').insert(feedbackPayload);
+    if (insertError) console.warn('quiz_feedback insert failed (email still sent):', insertError);
+  } catch (dbErr) {
+    console.warn('quiz_feedback DB error (email still sent):', dbErr);
+  }
+
+  return { ok: true, mode: feedbackUrl ? 'email' : 'saved' };
 }
 
 function getFish() {
