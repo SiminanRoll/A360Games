@@ -1,4 +1,5 @@
 
+/* ===== DARK THEME (default) ===== */
 :root {
   --bg: #070b10;
   --bg2: #0b111a;
@@ -14,6 +15,435 @@
   --amber: #ffb84d;
   --red: #ff6b7a;
   --shadow: 0 20px 60px rgba(0,0,0,0.45);
+
+  /* Theme toggle track/thumb */
+  --toggle-bg: rgba(255,255,255,0.10);
+  --toggle-border: rgba(0,216,255,0.35);
+  --toggle-thumb: #00d8ff;
+  --toggle-icon-size: 14px;
+}
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --bg: #f0f4fa;
+  --bg2: #e4eaf4;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-strong: rgba(255, 255, 255, 0.95);
+  --text: #0f1c2e;
+  --muted: #4a6080;
+  --line: rgba(0,0,0,0.08);
+  --blue: #0077cc;
+  --blue-soft: rgba(0, 119, 204, 0.12);
+  --purple: #5b3fcf;
+  --green: #00a86b;
+  --amber: #d97706;
+  --red: #dc2626;
+  --shadow: 0 20px 60px rgba(0,0,0,0.12);
+
+  --toggle-bg: rgba(0,0,0,0.07);
+  --toggle-border: rgba(0,119,204,0.35);
+  --toggle-thumb: #0077cc;
+}
+
+/* ===== THEME TOGGLE BUTTON ===== */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
+  border-radius: 999px;
+  padding: 7px 12px 7px 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.theme-toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(128,128,128,0.22);
+  border: 1px solid var(--toggle-border);
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+[data-theme="light"] .theme-toggle-track {
+  background: rgba(0,119,204,0.18);
+}
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s ease;
+}
+[data-theme="light"] .theme-toggle-thumb {
+  transform: translateX(16px);
+  background: var(--toggle-thumb);
+}
+.theme-toggle-icon {
+  font-size: 15px;
+  line-height: 1;
+  user-select: none;
+}
+.theme-toggle-label {
+  display: none;
+}
+@media (min-width: 500px) {
+  .theme-toggle-label { display: inline; }
+}
+
+/* ===== LIGHT THEME OVERRIDES ===== */
+
+/* Backgrounds */
+[data-theme="light"] html,
+[data-theme="light"] body {
+  background: radial-gradient(circle at top, #dce8f8, var(--bg) 55%);
+}
+
+[data-theme="light"] .experience,
+[data-theme="light"] .game-screen {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(91,63,207,0.10), transparent 26%),
+    radial-gradient(circle at 78% 16%, rgba(0,119,204,0.12), transparent 24%),
+    radial-gradient(circle at 50% 84%, rgba(0,133,255,0.07), transparent 30%),
+    radial-gradient(circle at 82% 60%, rgba(0,168,107,0.05), transparent 18%),
+    linear-gradient(180deg, #dce8f8 0%, #e8f0fa 46%, #f0f4fa 100%);
+}
+
+/* Scanlines lighter in light mode */
+[data-theme="light"] .scanlines { opacity: 0.04; }
+[data-theme="light"] .vignette { box-shadow: inset 0 0 150px rgba(0,0,0,0.08); }
+
+/* Panels & cards */
+[data-theme="light"] .caption,
+[data-theme="light"] .center-prompt,
+[data-theme="light"] .title-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(240,244,250,0.88));
+  border-color: rgba(0,119,204,0.14);
+}
+[data-theme="light"] .title-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.94), rgba(235,242,252,0.96)),
+    radial-gradient(circle at top, rgba(0,119,204,0.07), transparent 30%);
+  border-color: rgba(0,119,204,0.18);
+  box-shadow: var(--shadow), 0 0 60px rgba(0,119,204,0.06);
+}
+
+/* Buttons */
+[data-theme="light"] .skip-btn,
+[data-theme="light"] .start-btn,
+[data-theme="light"] .ghost-btn,
+[data-theme="light"] .choice-btn {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0,0,0,0.12);
+  color: var(--text);
+}
+[data-theme="light"] .skip-btn:hover,
+[data-theme="light"] .start-btn:hover,
+[data-theme="light"] .ghost-btn:hover,
+[data-theme="light"] .choice-btn:hover {
+  border-color: rgba(0,119,204,0.55);
+  box-shadow: 0 0 0 1px rgba(0,119,204,0.22), 0 0 32px rgba(0,119,204,0.10);
+}
+[data-theme="light"] .choice-btn::after {
+  background: linear-gradient(110deg, transparent 20%, rgba(0,0,0,0.04) 36%, transparent 48%);
+}
+[data-theme="light"] .choice-btn.selected {
+  border-color: rgba(0,119,204,0.55);
+  background: rgba(0,119,204,0.08);
+}
+[data-theme="light"] .choice-btn.correct {
+  border-color: rgba(0,168,107,0.55);
+  background: rgba(0,168,107,0.08);
+}
+[data-theme="light"] .choice-btn.incorrect {
+  border-color: rgba(220,38,38,0.45);
+  background: rgba(220,38,38,0.06);
+}
+
+/* Score pill */
+[data-theme="light"] .score-pill {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(0,119,204,0.22);
+}
+
+/* Choice letter badge */
+[data-theme="light"] .choice-btn .choice-letter {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.10);
+}
+
+/* Stat bar */
+[data-theme="light"] .stat-bar {
+  background: rgba(0,0,0,0.07);
+}
+[data-theme="light"] .stat-fill {
+  background: linear-gradient(90deg, var(--blue), var(--purple));
+  box-shadow: 0 0 18px rgba(0,119,204,0.20);
+}
+
+/* Notify cards */
+[data-theme="light"] .notify-template {
+  background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(240,244,250,0.80));
+  border-color: rgba(0,119,204,0.14);
+}
+
+/* Results / question panels */
+[data-theme="light"] .question-card,
+[data-theme="light"] .results-panel {
+  border-color: rgba(0,119,204,0.14);
+  box-shadow: var(--shadow), 0 0 38px rgba(0,119,204,0.05);
+}
+[data-theme="light"] .center-prompt,
+[data-theme="light"] .title-card,
+[data-theme="light"] .question-card,
+[data-theme="light"] .results-panel {
+  box-shadow: var(--shadow), 0 0 38px rgba(0,119,204,0.05);
+}
+
+/* Ambient orbs in light mode */
+[data-theme="light"] .orb-one {
+  background: radial-gradient(circle, rgba(0,119,204,0.22), rgba(0,119,204,0));
+}
+[data-theme="light"] .orb-two {
+  background: radial-gradient(circle, rgba(91,63,207,0.20), rgba(91,63,207,0));
+}
+[data-theme="light"] .orb-three {
+  background: radial-gradient(circle, rgba(0,168,107,0.14), rgba(0,168,107,0));
+}
+
+/* City glow backdrop */
+[data-theme="light"] .city-glow {
+  background:
+    radial-gradient(circle at 18% 76%, rgba(0,119,204,0.10), transparent 24%),
+    radial-gradient(circle at 70% 16%, rgba(91,63,207,0.10), transparent 20%),
+    radial-gradient(circle at 84% 24%, rgba(0,133,255,0.08), transparent 16%),
+    linear-gradient(180deg, rgba(220,232,248,0.94), rgba(240,244,250,0.96));
+}
+
+/* Office building */
+[data-theme="light"] .office-building {
+  background:
+    linear-gradient(180deg, rgba(200,218,240,0.98), rgba(225,235,248,0.98) 58%, rgba(235,242,252,1)),
+    linear-gradient(90deg, rgba(0,119,204,0.06), transparent 18%, rgba(91,63,207,0.05) 82%, transparent 100%);
+  border-color: rgba(0,119,204,0.18);
+}
+[data-theme="light"] .window-grid {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px),
+    radial-gradient(circle at 18% 18%, rgba(0,119,204,0.12), transparent 14%),
+    radial-gradient(circle at 82% 26%, rgba(91,63,207,0.10), transparent 15%);
+}
+[data-theme="light"] .window-grid::before {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(180, 200, 230, 0.20) 0 46px,
+      rgba(160, 200, 240, 0.55) 46px 50px,
+      rgba(180, 200, 230, 0.20) 50px 58px
+    );
+}
+[data-theme="light"] .building-neon {
+  background: linear-gradient(90deg, transparent, rgba(0,119,204,0.60), rgba(91,63,207,0.55), transparent);
+  box-shadow: 0 0 22px rgba(0,119,204,0.28);
+}
+
+/* Desk scene */
+[data-theme="light"] .desk {
+  background:
+    linear-gradient(180deg, rgba(215,228,245,0.96), rgba(195,215,238,0.98)),
+    linear-gradient(90deg, rgba(0,119,204,0.04), transparent 30%, rgba(91,63,207,0.03) 72%, transparent 100%);
+  border-color: rgba(0,119,204,0.10);
+}
+[data-theme="light"] .desk::before {
+  background: linear-gradient(90deg, transparent, rgba(0,119,204,0.14), transparent);
+}
+[data-theme="light"] .chair {
+  background: linear-gradient(180deg, #c0d4ec, #a8bdd8);
+}
+[data-theme="light"] .window {
+  background: linear-gradient(180deg, rgba(210,228,248,0.98), rgba(225,238,252,0.97));
+  border-color: rgba(0,119,204,0.10);
+}
+[data-theme="light"] .window::before {
+  background:
+    linear-gradient(180deg, rgba(0,119,204,0.12), transparent 46%),
+    radial-gradient(circle at top right, rgba(91,63,207,0.10), transparent 38%);
+}
+[data-theme="light"] .laptop-screen {
+  background:
+    linear-gradient(180deg, #daeaf8, #c8dcf0 78%),
+    radial-gradient(circle at 72% 16%, rgba(91,63,207,0.10), transparent 30%);
+  border-color: rgba(0,119,204,0.16);
+}
+[data-theme="light"] .laptop-screen::before {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.08) 42%, rgba(0,0,0,0.03) 100%),
+    radial-gradient(circle at 30% 28%, rgba(0,119,204,0.18), transparent 18%),
+    radial-gradient(circle at 74% 18%, rgba(91,63,207,0.08), transparent 18%);
+}
+[data-theme="light"] .laptop-base {
+  background: linear-gradient(180deg, #c0d4ec, #a8bdd8);
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .laptop-base::before {
+  background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(0,119,204,0.15), rgba(255,255,255,0.1));
+}
+[data-theme="light"] .laptop-base::after {
+  background: rgba(0,0,0,0.12);
+}
+
+/* Inbox screen */
+[data-theme="light"] .inbox-topbar { color: rgba(15,28,46,0.85); }
+[data-theme="light"] .message-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(245,250,255,0.65));
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .message-dot { background: var(--blue); box-shadow: 0 0 18px rgba(0,119,204,0.40); }
+[data-theme="light"] .message-dot.gift { background: var(--amber); box-shadow: 0 0 18px rgba(217,119,6,0.35); }
+[data-theme="light"] .message-dot.box { background: var(--purple); box-shadow: 0 0 18px rgba(91,63,207,0.35); }
+
+/* Walking path */
+[data-theme="light"] .walking-path {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0), rgba(0,0,0,0.06)),
+    linear-gradient(90deg, rgba(220,232,245,0.95), rgba(230,240,252,0.98) 46%, rgba(220,232,245,0.95));
+  border-top-color: rgba(0,119,204,0.10);
+}
+[data-theme="light"] .path-glow {
+  background: radial-gradient(circle at center, rgba(0,119,204,0.12), transparent 62%);
+}
+
+/* Title burst */
+[data-theme="light"] .title-burst {
+  background:
+    radial-gradient(circle at center, rgba(0,119,204,0.08), transparent 25%),
+    radial-gradient(circle at center, rgba(91,63,207,0.06), transparent 45%);
+}
+
+/* Comments */
+[data-theme="light"] .comment-input,
+[data-theme="light"] .comment-textarea {
+  background: rgba(255,255,255,0.70);
+  border-color: rgba(0,0,0,0.10);
+  color: var(--text);
+}
+[data-theme="light"] .comment-input:focus,
+[data-theme="light"] .comment-textarea:focus {
+  border-color: rgba(0,119,204,0.45);
+  box-shadow: 0 0 0 1px rgba(0,119,204,0.16);
+}
+
+/* Subtle brand */
+[data-theme="light"] .subtle-brand { color: rgba(15,28,46,0.45); }
+
+/* Click hint */
+[data-theme="light"] .click-hint { color: rgba(15,28,46,0.45); }
+
+/* Bubbles in light mode */
+[data-theme="light"] .game-bubble {
+  border-color: rgba(0,119,204,0.14);
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), rgba(0,119,204,0.04) 55%, rgba(91,63,207,0.02) 100%);
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.30), 0 0 14px rgba(0,119,204,0.04);
+}
+
+/* Final screen cards */
+[data-theme="light"] .final-stat-card {
+  background: rgba(255,255,255,0.82);
+  border-color: rgba(0,119,204,0.14);
+}
+
+/* Monitor glow */
+[data-theme="light"] .monitor-glow {
+  background:
+    radial-gradient(circle at center, rgba(0,119,204,0.14), transparent 54%),
+    radial-gradient(circle at 68% 22%, rgba(91,63,207,0.10), transparent 34%),
+    radial-gradient(circle at 25% 75%, rgba(39,126,255,0.08), transparent 30%),
+    radial-gradient(circle at 50% 50%, rgba(0,168,107,0.05), transparent 28%);
+}
+
+/* Laptop reflection */
+[data-theme="light"] .laptop-reflection {
+  background: radial-gradient(circle at center, rgba(0,119,204,0.12), rgba(91,63,207,0.05) 38%, transparent 72%);
+}
+
+/* Progress bar */
+[data-theme="light"] .progress { background: rgba(0,0,0,0.08); }
+[data-theme="light"] .progress-fill {
+  background: linear-gradient(90deg, var(--blue), var(--purple));
+  box-shadow: 0 0 24px rgba(0,119,204,0.22);
+}
+
+/* Notify cards per accent */
+[data-theme="light"] .notify-template.cyan { box-shadow: var(--shadow), 0 0 24px rgba(0,119,204,0.07); }
+[data-theme="light"] .notify-template.amber { box-shadow: var(--shadow), 0 0 24px rgba(217,119,6,0.05); }
+[data-theme="light"] .notify-template.purple { box-shadow: var(--shadow), 0 0 24px rgba(91,63,207,0.07); }
+
+/* Game bubble in light */
+[data-theme="light"] .game-bubble::after { background: rgba(255,255,255,0.45); }
+
+/* Live status */
+[data-theme="light"] .live-stats-status.ready { color: #0066aa; }
+[data-theme="light"] .live-stats-status.warning { color: #b45309; }
+[data-theme="light"] .live-stats-status.error { color: #dc2626; }
+
+/* Light theme final screen overrides */
+[data-theme="light"] .final-chart-panel,
+[data-theme="light"] .comment-panel {
+  border-color: rgba(0,119,204,0.14);
+  box-shadow: var(--shadow), 0 0 38px rgba(0,119,204,0.05);
+}
+[data-theme="light"] .final-stat-card {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(0,119,204,0.14);
+  box-shadow: none;
+}
+[data-theme="light"] .final-advice {
+  background: rgba(0,119,204,0.07);
+  border-color: rgba(0,119,204,0.16);
+}
+[data-theme="light"] .aggregate-fill {
+  box-shadow: 0 0 18px rgba(0,119,204,0.18);
+}
+[data-theme="light"] .comment-textarea {
+  background: rgba(255,255,255,0.70);
+  border-color: rgba(0,0,0,0.10);
+}
+[data-theme="light"] .comment-confirmation {
+  background: rgba(0,168,107,0.08);
+  border-color: rgba(0,168,107,0.20);
+}
+
+/* Smooth theme transitions */
+html, body,
+.experience, .game-screen,
+.caption, .center-prompt, .title-card,
+.skip-btn, .start-btn, .ghost-btn, .choice-btn,
+.question-card, .results-panel,
+.score-pill, .notify-template,
+.office-building, .desk, .chair, .window,
+.laptop-screen, .laptop-base,
+.message-card, .comment-input, .comment-textarea,
+.city-glow, .walking-path, .orb-one, .orb-two, .orb-three {
+  transition-property: background, background-color, border-color, color, box-shadow;
+  transition-duration: 0.35s;
+  transition-timing-function: ease;
 }
 
 * { box-sizing: border-box; }
@@ -1049,8 +1479,8 @@ button { font: inherit; }
 .final-stat-card {
   border-radius: 22px;
   padding: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--panel);
+  border: 1px solid var(--line);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 .final-stat-label {
@@ -1068,7 +1498,7 @@ button { font: inherit; }
   margin-top: 10px;
   padding: 18px;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(0,216,255,0.07), rgba(123,97,255,0.04));
+  background: var(--blue-soft);
   border: 1px solid rgba(122,214,255,0.12);
 }
 .email-security-note {
@@ -1100,7 +1530,7 @@ button { font: inherit; }
   width: min(680px, calc(100vw - 36px));
   padding: 26px;
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(11,17,26,0.96), rgba(8,13,20,0.96));
+  background: var(--panel-strong);
   border: 1px solid rgba(122,214,255,0.16);
   box-shadow: var(--shadow), 0 0 50px rgba(0,216,255,0.08);
 }
@@ -1115,12 +1545,11 @@ button { font: inherit; }
   resize: vertical;
   border-radius: 18px;
   padding: 16px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--panel);
+  border: 1px solid var(--line);
   color: var(--text);
   font: inherit;
   outline: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 .comment-textarea:focus {
   border-color: rgba(0,216,255,0.45);
@@ -1138,7 +1567,7 @@ button { font: inherit; }
   border-radius: 16px;
   background: rgba(76,255,184,0.08);
   border: 1px solid rgba(76,255,184,0.16);
-  color: #ccefe2;
+  color: var(--green);
 }
 
 @media (max-width: 680px) {
@@ -1177,9 +1606,6 @@ button { font: inherit; }
 .final-score-pill {
   white-space: nowrap;
 }
-.final-feedback-btn {
-  margin-top: 18px;
-}
 .final-hero {
   display: grid;
   grid-template-columns: 1.2fr .9fr;
@@ -1191,7 +1617,7 @@ button { font: inherit; }
 .comment-panel {
   border-radius: 28px;
   padding: 24px;
-  background: linear-gradient(180deg, rgba(9,15,24,0.94), rgba(8,13,20,0.92));
+  background: var(--panel-strong);
   border: 1px solid rgba(122, 214, 255, 0.14);
   box-shadow: var(--shadow), 0 0 38px rgba(0,216,255,0.07);
   margin-top: 18px;
@@ -1214,7 +1640,7 @@ button { font: inherit; }
 .aggregate-bar {
   height: 14px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.07);
+  background: var(--line);
   overflow: hidden;
 }
 .aggregate-fill {
@@ -1789,6 +2215,38 @@ html {
   background: rgba(8, 17, 27, 0.88);
 }
 
+/* Light theme scrollbar — scoped directly to scrolling elements for webkit compatibility */
+html[data-theme="light"] {
+  scrollbar-color: rgba(0,119,204,0.45) rgba(220,232,248,0.90);
+}
+html[data-theme="light"]::-webkit-scrollbar-track,
+html[data-theme="light"] .game-screen::-webkit-scrollbar-track {
+  background: rgba(220,232,248,0.90) !important;
+}
+html[data-theme="light"]::-webkit-scrollbar-thumb,
+html[data-theme="light"] .game-screen::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(91,63,207,0.55), rgba(0,119,204,0.55)) !important;
+  border-color: rgba(255,255,255,0.30);
+}
+html[data-theme="light"]::-webkit-scrollbar-thumb:hover,
+html[data-theme="light"] .game-screen::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(91,63,207,0.75), rgba(0,119,204,0.72)) !important;
+}
+html[data-theme="light"]::-webkit-scrollbar-corner,
+html[data-theme="light"] .game-screen::-webkit-scrollbar-corner {
+  background: rgba(220,232,248,0.90) !important;
+}
+/* Also catch the game-screen element directly since it's the main scroll container */
+.game-screen::-webkit-scrollbar-track { background: rgba(8, 17, 27, 0.88); }
+.game-screen::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(123, 97, 255, 0.62), rgba(0, 216, 255, 0.58));
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.game-screen::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(123, 97, 255, 0.78), rgba(0, 216, 255, 0.72));
+}
+
 
 .game-bubbles {
   position: absolute;
@@ -1902,1299 +2360,90 @@ html {
   max-width: 980px;
 }
 
+/* Game screen theme bar */
+.game-theme-bar {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 50;
+  pointer-events: auto;
+}
 
-/* theme toggle */
-.top-controls {
+/* ===== FEEDBACK CTA BAR ===== */
+.feedback-cta-bar {
+  position: sticky;
+  bottom: 18px;
+  z-index: 40;
+  margin: 22px 0 0;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(0,216,255,0.14), rgba(123,97,255,0.12));
+  border: 1px solid rgba(0,216,255,0.28);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,216,255,0.10);
+  backdrop-filter: blur(18px);
+  animation: ctaSlideUp 0.5s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: 0.6s;
+  opacity: 0;
+}
+
+@keyframes ctaSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-cta-inner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  position: relative;
-  z-index: 9999;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  flex-wrap: wrap;
 }
 
-.theme-toggle.switch-toggle {
-  appearance: none;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(8, 14, 21, 0.75);
+.feedback-cta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.feedback-cta-text strong {
+  font-size: 1rem;
   color: var(--text);
-  width: 54px;
-  height: 32px;
-  border-radius: 999px;
-  padding: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow);
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
-  opacity: 0.95;
 }
 
-.theme-toggle.switch-toggle:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255,255,255,0.22);
+.feedback-cta-text span {
+  font-size: 0.88rem;
+  color: var(--muted);
 }
 
-.theme-toggle .switch-track {
-  position: relative;
-  width: 42px;
-  height: 20px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.14);
-  transition: background 0.22s ease;
+.feedback-cta-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(0,216,255,0.22), rgba(123,97,255,0.18)) !important;
+  border-color: rgba(0,216,255,0.45) !important;
 }
 
-.theme-toggle .switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #dbeafe;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.18);
-  transition: transform 0.22s ease, background 0.22s ease;
+.feedback-cta-btn:hover {
+  background: linear-gradient(135deg, rgba(0,216,255,0.34), rgba(123,97,255,0.28)) !important;
+  transform: translateY(-2px);
 }
 
-html.light {
-  --bg: #eef5fb;
-  --bg2: #ffffff;
-  --panel: rgba(255,255,255,0.78);
-  --panel-strong: rgba(255,255,255,0.94);
-  --text: #0b1f2a;
-  --muted: #4a6b7c;
-  --line: rgba(11,31,42,0.1);
-  --blue-soft: rgba(14,165,233,0.14);
-  --shadow: 0 20px 60px rgba(7, 24, 39, 0.14);
+/* Light theme overrides for CTA bar */
+[data-theme="light"] .feedback-cta-bar {
+  background: linear-gradient(135deg, rgba(0,119,204,0.10), rgba(91,63,207,0.08));
+  border-color: rgba(0,119,204,0.28);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,119,204,0.10);
 }
 
-html.light body {
-  background: radial-gradient(circle at top, #ffffff, var(--bg) 55%);
+[data-theme="light"] .feedback-cta-btn {
+  background: linear-gradient(135deg, rgba(0,119,204,0.18), rgba(91,63,207,0.14)) !important;
+  border-color: rgba(0,119,204,0.45) !important;
 }
 
-html.light .experience,
-html.light .game-screen {
-  background:
-    radial-gradient(circle at 18% 18%, rgba(123,97,255,0.10), transparent 26%),
-    radial-gradient(circle at 78% 16%, rgba(0,216,255,0.10), transparent 24%),
-    radial-gradient(circle at 50% 84%, rgba(0,133,255,0.08), transparent 30%),
-    radial-gradient(circle at 82% 60%, rgba(76,255,184,0.05), transparent 18%),
-    linear-gradient(180deg, #f8fbff 0%, #eef5fb 46%, #e8f2fa 100%);
+[data-theme="light"] .feedback-cta-btn:hover {
+  background: linear-gradient(135deg, rgba(0,119,204,0.28), rgba(91,63,207,0.22)) !important;
 }
 
-html.light .theme-toggle.switch-toggle {
-  border-color: rgba(11,31,42,0.10);
-  background: rgba(255,255,255,0.82);
-}
-
-html.light .theme-toggle .switch-track {
-  background: rgba(14,165,233,0.18);
-}
-
-html.light .theme-toggle .switch-thumb {
-  transform: translateX(22px);
-  background: #0ea5e9;
-}
-
-html.light .skip-btn,
-html.light .start-btn,
-html.light .ghost-btn,
-html.light .choice-btn {
-  border-color: rgba(11,31,42,0.10);
-  background: rgba(255,255,255,0.82);
-}
-
-html.light .panel,
-html.light .scene-card,
-html.light .question-shell,
-html.light .results-panel,
-html.light .final-shell,
-html.light .feedback-shell,
-html.light .advice-shell,
-html.light .laptop-screen,
-html.light .title-card,
-html.light .mail-card,
-html.light .quiz-card {
-  background: rgba(255,255,255,0.72);
-  border-color: rgba(11,31,42,0.10);
-}
-
-
-
-/* === LIGHT THEME VISUAL REBALANCE PATCH === */
-html.light {
-  --bg: #edf3f8;
-  --bg2: #f8fbfe;
-  --panel: rgba(255,255,255,0.78);
-  --panel-strong: rgba(255,255,255,0.90);
-  --text: #102033;
-  --muted: #4d6278;
-  --line: rgba(16,32,51,0.10);
-  --blue-soft: rgba(14,165,233,0.12);
-  --shadow: 0 20px 60px rgba(20, 37, 59, 0.12);
-}
-
-html.light body {
-  background:
-    radial-gradient(circle at 18% 24%, rgba(110, 156, 255, 0.10), transparent 22%),
-    radial-gradient(circle at 78% 18%, rgba(0, 183, 255, 0.10), transparent 24%),
-    radial-gradient(circle at 50% 86%, rgba(137, 109, 255, 0.08), transparent 26%),
-    linear-gradient(180deg, #f8fbfe 0%, #eef4f9 55%, #e8eff6 100%);
-}
-
-html.light .experience,
-html.light .game-screen {
-  background:
-    radial-gradient(circle at 18% 18%, rgba(123,97,255,0.09), transparent 24%),
-    radial-gradient(circle at 78% 16%, rgba(0,216,255,0.10), transparent 24%),
-    radial-gradient(circle at 50% 84%, rgba(0,133,255,0.08), transparent 28%),
-    radial-gradient(circle at 82% 60%, rgba(76,255,184,0.05), transparent 16%),
-    linear-gradient(180deg, #f7fbff 0%, #eef4f9 54%, #e8eff6 100%);
-}
-
-html.light .scanlines {
-  opacity: 0.03;
-}
-
-html.light .vignette {
-  box-shadow: inset 0 0 120px rgba(34, 56, 86, 0.08);
-}
-
-html.light .ambient-orb {
-  opacity: 0.10;
-  filter: blur(56px);
-}
-
-html.light .phish-character {
-  opacity: 0.16;
-}
-
-html.light .bubble {
-  opacity: 0.16;
-}
-
-html.light .caption,
-html.light .center-prompt,
-html.light .title-card,
-html.light .question-shell,
-html.light .results-panel,
-html.light .final-shell,
-html.light .feedback-shell,
-html.light .advice-shell,
-html.light .mail-card,
-html.light .quiz-card {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.70));
-  border: 1px solid rgba(16,32,51,0.08);
-  box-shadow:
-    0 14px 38px rgba(26, 47, 77, 0.10),
-    inset 0 1px 0 rgba(255,255,255,0.65);
-  backdrop-filter: blur(12px);
-}
-
-html.light .caption h1,
-html.light .caption h2,
-html.light .center-prompt h1,
-html.light .center-prompt h2,
-html.light .title-card h1,
-html.light .title-card h2,
-html.light .title-card h3 {
-  color: #0f2032;
-}
-
-html.light .caption p,
-html.light .center-prompt p,
-html.light .title-card p {
-  color: #56697e;
-}
-
-html.light .eyebrow,
-html.light .click-hint {
-  color: rgba(16,32,51,0.58);
-}
-
-html.light .signal-grid {
-  background:
-    linear-gradient(rgba(16,32,51,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16,32,51,0.04) 1px, transparent 1px),
-    radial-gradient(circle at 30% 40%, rgba(0,216,255,0.08), transparent 20%),
-    radial-gradient(circle at 76% 30%, rgba(123,97,255,0.08), transparent 18%);
-  border-color: rgba(16,32,51,0.06);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.30);
-}
-
-html.light .hero-beam {
-  background:
-    radial-gradient(circle at center, rgba(0,216,255,0.10), transparent 42%),
-    radial-gradient(circle at center, rgba(123,97,255,0.08), transparent 56%);
-  opacity: 0.55;
-  filter: blur(34px);
-}
-
-html.light .data-ring {
-  border-color: rgba(16,32,51,0.10);
-  box-shadow: 0 0 20px rgba(0, 173, 239, 0.05);
-}
-
-html.light .window {
-  background: linear-gradient(180deg, rgba(21,50,84,0.98), rgba(12,24,40,0.98));
-  border-color: rgba(255,255,255,0.32);
-  box-shadow: 0 18px 42px rgba(26, 47, 77, 0.14);
-}
-
-html.light .window::before {
-  background:
-    linear-gradient(180deg, rgba(0,216,255,0.18), transparent 46%),
-    radial-gradient(circle at top right, rgba(123,97,255,0.16), transparent 38%),
-    radial-gradient(circle at 22% 70%, rgba(76,255,184,0.06), transparent 20%);
-}
-
-html.light .monitor-glow {
-  opacity: 0.48;
-  filter: blur(18px);
-}
-
-html.light .desk {
-  background: linear-gradient(180deg, rgba(28,47,74,0.94), rgba(14,26,43,0.98));
-  box-shadow: 0 24px 44px rgba(24, 41, 64, 0.18);
-}
-
-html.light .chair {
-  background: linear-gradient(180deg, #21364f, #122235);
-}
-
-html.light .laptop {
-  filter: drop-shadow(0 24px 46px rgba(24,41,64,0.24));
-}
-
-html.light .laptop-screen {
-  border-color: rgba(206, 231, 255, 0.42);
-  background:
-    linear-gradient(180deg, #1d466e, #0b1825 80%),
-    radial-gradient(circle at 72% 16%, rgba(123,97,255,0.14), transparent 30%);
-  box-shadow:
-    0 20px 44px rgba(24,41,64,0.18),
-    inset 0 0 0 1px rgba(255,255,255,0.05);
-}
-
-html.light .laptop-screen::before {
-  background:
-    linear-gradient(180deg, rgba(150, 226, 255, 0.16), rgba(255,255,255,0.04) 42%, rgba(0,0,0,0.14) 100%),
-    radial-gradient(circle at 30% 28%, rgba(0,216,255,0.20), transparent 18%),
-    radial-gradient(circle at 74% 18%, rgba(123,97,255,0.12), transparent 18%);
-}
-
-html.light .skip-btn,
-html.light .start-btn,
-html.light .ghost-btn,
-html.light .choice-btn {
-  border-color: rgba(16,32,51,0.10);
-  background: rgba(255,255,255,0.84);
-  color: #102033;
-  box-shadow: 0 8px 24px rgba(24,41,64,0.08);
-}
-
-html.light .skip-btn:hover,
-html.light .start-btn:hover,
-html.light .ghost-btn:hover,
-html.light .choice-btn:hover {
-  border-color: rgba(14,165,233,0.35);
-  box-shadow: 0 10px 28px rgba(14,165,233,0.10);
-}
-
-html.light .theme-toggle.switch-toggle {
-  border-color: rgba(16,32,51,0.10);
-  background: rgba(255,255,255,0.82);
-  box-shadow: 0 8px 20px rgba(24,41,64,0.08);
-}
-
-html.light .theme-toggle .switch-track {
-  background: rgba(14,165,233,0.16);
-}
-
-html.light .theme-toggle .switch-thumb {
-  background: #119bdc;
-}
-
-
-
-/* === LIGHT THEME CLEANUP PATCH === */
-html.light,
-html.light body,
-html.light .app-shell {
-  background:
-    radial-gradient(circle at 14% 18%, rgba(129, 105, 255, 0.08), transparent 22%),
-    radial-gradient(circle at 82% 12%, rgba(0, 205, 255, 0.08), transparent 24%),
-    linear-gradient(180deg, #f7fbff 0%, #edf4fa 56%, #e8f0f6 100%);
-}
-
-html.light .experience,
-html.light .game-screen {
-  background:
-    radial-gradient(circle at 14% 18%, rgba(129, 105, 255, 0.08), transparent 22%),
-    radial-gradient(circle at 82% 12%, rgba(0, 205, 255, 0.08), transparent 24%),
-    radial-gradient(circle at 50% 82%, rgba(14,165,233,0.06), transparent 26%),
-    linear-gradient(180deg, #f7fbff 0%, #edf4fa 56%, #e8f0f6 100%);
-}
-
-html.light .theme-toggle.switch-toggle,
-html.light .skip-btn {
-  background: rgba(255,255,255,0.88);
-  border-color: rgba(16,32,51,0.10);
-  box-shadow: 0 8px 24px rgba(26, 47, 77, 0.08);
-  color: #102033;
-}
-
-html.light .score-pill,
-html.light .final-score-pill {
-  background: rgba(18, 37, 58, 0.82);
-  border-color: rgba(18, 37, 58, 0.12);
-  color: #f8fbff;
-  box-shadow: 0 10px 28px rgba(24, 41, 64, 0.10);
-}
-
-html.light .question-card,
-html.light .results-panel,
-html.light .final-screen,
-html.light .final-advice,
-html.light .comment-panel,
-html.light .final-stat-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.80));
-  border: 1px solid rgba(16,32,51,0.08);
-  box-shadow: 0 16px 38px rgba(26, 47, 77, 0.10);
-}
-
-html.light .final-screen h1,
-html.light .final-screen h2,
-html.light .final-screen h3,
-html.light .question-card h2,
-html.light .results-panel h3,
-html.light .comment-panel h3,
-html.light .game-header h1 {
-  color: #11243a;
-}
-
-html.light .final-screen p,
-html.light .question-card p,
-html.light .results-panel p,
-html.light .comment-panel p,
-html.light .final-advice p,
-html.light .game-header p,
-html.light .aggregate-value,
-html.light .stat-value,
-html.light .choice-tag {
-  color: #556b82;
-}
-
-html.light .choice-btn {
-  background: rgba(255,255,255,0.82);
-  border: 1px solid rgba(16,32,51,0.08);
-  box-shadow: 0 8px 22px rgba(26, 47, 77, 0.05);
-  color: #11243a;
-}
-
-html.light .choice-btn .choice-letter {
-  background: rgba(18,37,58,0.06);
-  border-color: rgba(16,32,51,0.10);
-  color: #11243a;
-}
-
-html.light .choice-btn.correct {
-  background: linear-gradient(180deg, rgba(22, 163, 74, 0.10), rgba(255,255,255,0.88));
-  border-color: rgba(22, 163, 74, 0.22);
-}
-
-html.light .choice-btn.incorrect {
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08), rgba(255,255,255,0.88));
-  border-color: rgba(239, 68, 68, 0.18);
-}
-
-html.light .aggregate-bar,
-html.light .stat-bar {
-  background: rgba(16,32,51,0.08);
-}
-
-html.light .question-label,
-html.light .vote-label,
-html.light .final-stat-label,
-html.light .eyebrow {
-  color: #06b6d4;
-}
-
-html.light .comment-input,
-html.light .comment-textarea {
-  background: rgba(255,255,255,0.84);
-  border: 1px solid rgba(16,32,51,0.10);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
-  color: #11243a;
-}
-
-html.light .comment-input::placeholder,
-html.light .comment-textarea::placeholder {
-  color: #6f8194;
-}
-
-html.light .window {
-  background: linear-gradient(180deg, rgba(24,54,86,0.98), rgba(10,20,33,0.98));
-  border-color: rgba(16,32,51,0.10);
-  box-shadow: 0 18px 42px rgba(26, 47, 77, 0.14);
-}
-
-html.light .caption,
-html.light .center-prompt,
-html.light .title-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.82));
-  border: 1px solid rgba(16,32,51,0.08);
-  box-shadow: 0 16px 38px rgba(26, 47, 77, 0.10);
-}
-
-html.light .caption h1,
-html.light .caption h2,
-html.light .center-prompt h1,
-html.light .center-prompt h2,
-html.light .title-card h2,
-html.light .title-card h3 {
-  color: #11243a;
-}
-
-html.light .caption p,
-html.light .center-prompt p,
-html.light .title-card p,
-html.light .subtle-brand,
-html.light .click-hint {
-  color: #5c7186;
-}
-
-html.light .laptop {
-  filter: drop-shadow(0 24px 44px rgba(24,41,64,0.20));
-}
-
-html.light .laptop-screen {
-  background:
-    linear-gradient(180deg, #19456d, #0b1825 80%),
-    radial-gradient(circle at 72% 16%, rgba(123,97,255,0.14), transparent 30%);
-  border-color: rgba(255,255,255,0.18);
-  box-shadow:
-    0 16px 34px rgba(24,41,64,0.12),
-    inset 0 0 0 1px rgba(255,255,255,0.04);
-}
-
-html.light .laptop-screen::before {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.00) 28%, rgba(0,0,0,0.08) 100%),
-    radial-gradient(circle at 32% 34%, rgba(0,216,255,0.10), transparent 20%),
-    radial-gradient(circle at 74% 20%, rgba(123,97,255,0.10), transparent 18%);
-}
-
-html.light .desk {
-  background: linear-gradient(180deg, rgba(29,50,76,0.96), rgba(16,27,44,0.98));
-}
-
-html.light .chair {
-  background: linear-gradient(180deg, #1e3450, #112335);
-}
-
-html.light .mail-shell,
-html.light .mail-card,
-html.light .message-card,
-html.light .notification-float {
-  background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.76));
-  border-color: rgba(16,32,51,0.08);
-  color: #11243a;
-}
-
-html.light .game-wrap {
-  scrollbar-color: rgba(14,165,233,0.55) rgba(182,199,214,0.62);
-}
-
-html.light *::-webkit-scrollbar-track {
-  background: rgba(182,199,214,0.62);
-}
-
-html.light *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(123,97,255,0.58), rgba(14,165,233,0.60));
-  border: 1px solid rgba(255,255,255,0.55);
-}
-
-html.light *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(123,97,255,0.70), rgba(14,165,233,0.72));
-}
-
-
-
-/* === FINAL LIGHT MODE DARK PANEL FIX === */
-html.light .final-shell,
-html.light .final-stage,
-html.light .final-wrap,
-html.light .final-page,
-html.light .final-content,
-html.light .final-results,
-html.light .breakdown-shell,
-html.light .response-breakdown,
-html.light .aggregate-shell,
-html.light .aggregate-chart-card,
-html.light .aggregate-chart,
-html.light .stats-shell,
-html.light .insight-panel,
-html.light .advice-panel,
-html.light .feedback-shell,
-html.light .comment-shell {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.84)) !important;
-  border: 1px solid rgba(16,32,51,0.08) !important;
-  box-shadow: 0 16px 38px rgba(26, 47, 77, 0.10) !important;
-  color: #11243a !important;
-}
-
-html.light .final-shell h1,
-html.light .final-shell h2,
-html.light .final-shell h3,
-html.light .final-stage h1,
-html.light .final-stage h2,
-html.light .final-stage h3,
-html.light .breakdown-shell h1,
-html.light .breakdown-shell h2,
-html.light .breakdown-shell h3,
-html.light .response-breakdown h1,
-html.light .response-breakdown h2,
-html.light .response-breakdown h3,
-html.light .aggregate-shell h1,
-html.light .aggregate-shell h2,
-html.light .aggregate-shell h3 {
-  color: #11243a !important;
-}
-
-html.light .final-shell p,
-html.light .final-stage p,
-html.light .breakdown-shell p,
-html.light .response-breakdown p,
-html.light .aggregate-shell p,
-html.light .aggregate-chart-card p,
-html.light .insight-panel p,
-html.light .advice-panel p,
-html.light .feedback-shell p {
-  color: #556b82 !important;
-}
-
-html.light .aggregate-label,
-html.light .aggregate-value,
-html.light .stat-label,
-html.light .stat-value {
-  color: #465b71 !important;
-}
-
-html.light .aggregate-bar,
-html.light .stat-bar {
-  background: rgba(16,32,51,0.08) !important;
-}
-
-html.light .aggregate-fill,
-html.light .stat-fill {
-  filter: saturate(1.05);
-}
-
-html.light .results-panel,
-html.light .response-breakdown,
-html.light .aggregate-shell,
-html.light .aggregate-chart-card {
-  backdrop-filter: blur(10px);
-}
-
-html.light .response-breakdown *,
-html.light .aggregate-shell *,
-html.light .aggregate-chart-card * {
-  color: inherit;
-}
-
-/* stronger fallback for any dark utility class on final page */
-html.light [class*="breakdown"],
-html.light [class*="aggregate"],
-html.light [class*="response"] {
-  color: #11243a;
-}
-
-html.light [class*="breakdown"] p,
-html.light [class*="aggregate"] p,
-html.light [class*="response"] p {
-  color: #556b82;
-}
-
-
-
-/* === INTRO + FINAL LIGHT MODE CONSISTENCY FIX === */
-html.light .city-glow {
-  background:
-    radial-gradient(circle at 18% 76%, rgba(0,216,255,0.10), transparent 24%),
-    radial-gradient(circle at 70% 16%, rgba(123,97,255,0.10), transparent 20%),
-    radial-gradient(circle at 84% 24%, rgba(0,133,255,0.08), transparent 16%),
-    linear-gradient(180deg, rgba(247,251,255,0.96), rgba(237,244,250,0.96)) !important;
-}
-
-html.light .notify-template,
-html.light .notify-card,
-html.light .notification-float {
-  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.76)) !important;
-  border: 1px solid rgba(16,32,51,0.08) !important;
-  box-shadow: 0 10px 28px rgba(26,47,77,0.08) !important;
-  color: #11243a !important;
-}
-
-html.light .float-copy strong,
-html.light .notify-template strong,
-html.light .notify-card strong {
-  color: #11243a !important;
-}
-
-html.light .float-copy span,
-html.light .notify-template span,
-html.light .notify-card span {
-  color: #5c7186 !important;
-}
-
-html.light .signal-grid {
-  border-color: rgba(16,32,51,0.08) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22);
-}
-
-html.light .title-burst {
-  background:
-    radial-gradient(circle at center, rgba(0,216,255,0.06), transparent 25%),
-    radial-gradient(circle at center, rgba(123,97,255,0.05), transparent 45%) !important;
-}
-
-html.light .inbox-topbar {
-  color: rgba(232,240,255,0.86) !important;
-}
-
-html.light .message-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
-  border-color: rgba(255,255,255,0.08);
-}
-
-html.light .final-chart-panel,
-html.light .comment-panel,
-html.light .final-advice {
-  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.84)) !important;
-  border: 1px solid rgba(16,32,51,0.08) !important;
-  box-shadow: 0 16px 38px rgba(26,47,77,0.10) !important;
-  color: #11243a !important;
-}
-
-html.light .final-chart-panel h2,
-html.light .final-chart-panel h3,
-html.light .comment-panel h2,
-html.light .comment-panel h3,
-html.light .final-advice h2,
-html.light .final-advice h3 {
-  color: #11243a !important;
-}
-
-html.light .final-chart-panel p,
-html.light .comment-panel p,
-html.light .final-advice p {
-  color: #556b82 !important;
-}
-
-html.light .game-wrap,
-html.light .final-stage,
-html.light .question-stage {
-  scrollbar-color: rgba(14,165,233,0.55) rgba(182,199,214,0.62);
-}
-
-/* force light surface on any dark holdouts inside final sections */
-html.light .final-stage [style*="rgba(9,15,24"],
-html.light .final-stage [style*="rgba(8,13,20"],
-html.light .final-stage [class*="panel"],
-html.light .final-stage [class*="chart"] {
-  color: inherit;
-}
-
-
-
-/* === LOCKED STAGE + MOBILE INTRO PATCH === */
-
-/* Lock desktop intro to a fixed stage so the composition scales together */
-.experience {
-  overflow: hidden;
-}
-
-.stage {
-  width: min(100%, 1600px);
-  height: min(100svh, 900px);
-  margin: 0 auto;
-  position: relative;
-}
-
-.scene {
-  overflow: hidden;
-}
-
-.scene-1,
-.scene-2,
-.scene-3,
-.scene-4 {
-  contain: layout paint;
-}
-
-.scene-2 .desk-scene,
-.scene-3 .desk-scene {
-  position: absolute;
-  inset: 0;
-  transform-origin: center center;
-}
-
-/* Scale the whole desktop scene rather than reflowing individual pieces */
-@media (max-width: 1500px), (max-height: 900px) {
-  .stage {
-    transform: scale(0.94);
-    transform-origin: top center;
-  }
-}
-
-@media (max-width: 1320px), (max-height: 820px) {
-  .stage {
-    transform: scale(0.88);
-    transform-origin: top center;
-  }
-}
-
-/* Keep core prompt cards in a stable, centered perspective */
-.intro-center {
-  top: 24% !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-}
-
-.scene-2 .caption.right {
-  top: 22% !important;
-  right: 5.5% !important;
-}
-
-.scene-3 .center-prompt {
-  top: 24% !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-}
-
-.scene-4 .title-card {
-  top: 23% !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-}
-
-/* Keep laptop/base relationship stable on desktop */
-.scene-2 .laptop,
-.scene-3 .laptop {
-  left: 30% !important;
-  bottom: 18% !important;
-  width: min(520px, 38vw) !important;
-  /* height removed for aspect ratio fix */
-}
-
-.scene-3 .laptop.open.zoomed {
-  left: 30% !important;
-  bottom: 18% !important;
-  transform: none !important;
-}
-
-.scene-2 .laptop-screen,
-.scene-3 .laptop-screen {
-  inset: 0 8% 42px 8% !important;
-  transform-origin: center bottom !important;
-}
-
-.scene-2 .laptop-base,
-.scene-3 .laptop-base {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-/* Stronger light-ocean look */
-html.light,
-html.light body,
-html.light .app-shell,
-html.light .experience,
-html.light .game-screen,
-html.light .game-wrap,
-html.light .city-glow,
-html.light .mobile-intro-backdrop {
-  background:
-    radial-gradient(circle at 14% 18%, rgba(104, 120, 255, 0.22), transparent 24%),
-    radial-gradient(circle at 84% 12%, rgba(0, 190, 255, 0.22), transparent 26%),
-    radial-gradient(circle at 18% 78%, rgba(26, 155, 255, 0.18), transparent 22%),
-    radial-gradient(circle at 72% 64%, rgba(0, 220, 190, 0.12), transparent 20%),
-    linear-gradient(180deg, #cdefff 0%, #bbe5f7 45%, #acdbef 100%) !important;
-}
-
-html.light .signal-grid {
-  background:
-    linear-gradient(rgba(18, 59, 104, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 59, 104, 0.045) 1px, transparent 1px),
-    radial-gradient(circle at 24% 72%, rgba(0, 196, 255, 0.16), transparent 22%),
-    radial-gradient(circle at 80% 24%, rgba(112, 126, 255, 0.16), transparent 22%) !important;
-  opacity: 0.9 !important;
-}
-
-html.light .vignette {
-  box-shadow: inset 0 0 180px rgba(17, 66, 110, 0.10) !important;
-}
-
-html.light .ambient-orb,
-html.light .hero-beam,
-html.light .title-burst {
-  opacity: 0.92 !important;
-}
-
-html.light .phish-character {
-  opacity: 0.22 !important;
-}
-
-html.light .window,
-html.light .window *,
-html.light .inbox-screen,
-html.light .inbox-screen *,
-html.light .message-card strong {
-  color: rgba(245, 251, 255, 0.96) !important;
-}
-
-html.light .message-card p,
-html.light .inbox-topbar span {
-  color: rgba(221, 235, 248, 0.94) !important;
-}
-
-html.light .window,
-html.light .laptop-screen {
-  background:
-    linear-gradient(180deg, rgba(20, 57, 92, 0.98), rgba(8, 18, 32, 0.98)),
-    radial-gradient(circle at 72% 16%, rgba(123,97,255,0.18), transparent 30%) !important;
-}
-
-/* Protected visual layer ordering for intro popups */
-.notification-field {
-  z-index: 3 !important;
-}
-.notify-card,
-.notify-template {
-  z-index: 3 !important;
-}
-.intro-center,
-.caption,
-.center-prompt,
-.title-card {
-  z-index: 7 !important;
-}
-
-/* MOBILE: do not render the desk/laptop scene at all */
-.mobile-intro-backdrop {
-  display: none;
-}
-
-@media (max-width: 900px) {
-  .stage {
-    width: 100%;
-    height: 100%;
-    transform: none !important;
-  }
-
-  .mobile-intro-backdrop {
-    display: block;
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background:
-      radial-gradient(circle at 18% 18%, rgba(104,120,255,0.18), transparent 24%),
-      radial-gradient(circle at 82% 14%, rgba(0,190,255,0.20), transparent 26%),
-      radial-gradient(circle at 18% 78%, rgba(26,155,255,0.16), transparent 24%),
-      linear-gradient(180deg, rgba(8,18,32,0.25), rgba(8,18,32,0.10));
-  }
-
-  .scene-2 .desk-scene,
-  .scene-3 .desk-scene {
-    display: none !important;
-  }
-
-  .scene-1 .signal-grid,
-  .scene-1 .data-ring,
-  .scene-1 .hero-beam,
-  .scene-1 .notification-field {
-    z-index: 1;
-  }
-
-  .scene-2,
-  .scene-3,
-  .scene-4 {
-    background:
-      radial-gradient(circle at 18% 18%, rgba(104,120,255,0.16), transparent 24%),
-      radial-gradient(circle at 82% 14%, rgba(0,190,255,0.18), transparent 26%),
-      radial-gradient(circle at 18% 78%, rgba(26,155,255,0.12), transparent 24%),
-      linear-gradient(180deg, rgba(7,14,24,0.28), rgba(7,14,24,0.16));
-  }
-
-  .caption,
-  .intro-center,
-  .center-prompt,
-  .title-card {
-    width: min(92vw, 560px) !important;
-    max-width: min(92vw, 560px) !important;
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    text-align: center !important;
-    padding: 22px 20px !important;
-    border-radius: 24px !important;
-  }
-
-  .intro-center {
-    top: 24% !important;
-  }
-
-  .scene-2 .caption.right {
-    top: 27% !important;
-  }
-
-  .scene-3 .center-prompt {
-    top: 27% !important;
-  }
-
-  .scene-4 .title-card {
-    top: 24% !important;
-  }
-
-  .scene-4 .title-card .start-btn {
-    margin-top: 10px;
-  }
-
-  .click-hint {
-    bottom: 26px !important;
-  }
-
-  .notify-card,
-  .notify-template {
-    min-width: 190px !important;
-    max-width: 42vw !important;
-    padding: 12px 14px !important;
-  }
-
-  .top-controls {
-    top: 12px !important;
-    right: 12px !important;
-  }
-
-  .skip-btn {
-    padding: 10px 14px !important;
-  }
-
-  html.light .scene-2,
-  html.light .scene-3,
-  html.light .scene-4 {
-    background:
-      radial-gradient(circle at 18% 18%, rgba(104,120,255,0.20), transparent 24%),
-      radial-gradient(circle at 82% 14%, rgba(0,190,255,0.22), transparent 26%),
-      radial-gradient(circle at 18% 78%, rgba(26,155,255,0.18), transparent 24%),
-      linear-gradient(180deg, rgba(205,239,255,0.78), rgba(172,219,239,0.70)) !important;
-  }
-}
-
-
-
-/* === CLEAN PATCH: Laptop aspect ratio + proper open === */
-
-.scene-2 .laptop,
-.scene-3 .laptop {
-  width: min(420px, 30vw);
-  aspect-ratio: 16 / 10;
-}
-
-.scene-2 .laptop-screen,
-.scene-3 .laptop-screen {
-  inset: 0 8% 42px 8%;
-  height: auto;
-  transform-origin: bottom center;
-}
-
-@keyframes openLaptop {
-  0% {
-    transform: rotateX(88deg);
-  }
-  100% {
-    transform: rotateX(0deg);
-  }
-}
-
-/* Force use of correct animation */
-.scene-2.active .laptop.closed .laptop-screen {
-  animation: openLaptop 1.6s cubic-bezier(.2,.8,.2,1) forwards;
-}
-
-/* Keep base connected */
-.scene-2 .laptop-base,
-.scene-3 .laptop-base {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-.scene-2 .laptop-screen,
-.scene-3 .laptop-screen {
-  margin-bottom: -4px;
-}
-
-
-
-/* === PATCH: full-height laptop open + slower non-duplicate notifications === */
-
-/* Keep the scene the same, only make the laptop smaller on tighter desktop screens */
-.scene-2 .laptop,
-.scene-3 .laptop {
-  height: auto !important;
-  aspect-ratio: 16 / 10 !important;
-}
-
-.scene-2 .laptop-screen,
-.scene-3 .laptop-screen {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  transform-origin: bottom center !important;
-}
-
-@media (max-width: 1680px), (max-height: 980px) {
-  .scene-2 .laptop,
-  .scene-3 .laptop {
-    width: min(450px, 33vw) !important;
-    left: 29.5% !important;
-    bottom: 17% !important;
-  }
-}
-
-@media (max-width: 1536px), (max-height: 900px) {
-  .scene-2 .laptop,
-  .scene-3 .laptop {
-    width: min(400px, 29vw) !important;
-    left: 29% !important;
-    bottom: 16% !important;
-  }
-}
-
-@media (max-width: 1366px), (max-height: 820px) {
-  .scene-2 .laptop,
-  .scene-3 .laptop {
-    width: min(360px, 27vw) !important;
-    left: 28.5% !important;
-    bottom: 15.5% !important;
-  }
-}
-
-/* Make the lid fully open rather than ending squashed */
-@keyframes openLaptopFullHeightFixed {
-  0%   { transform: rotateX(88deg) translateY(8px); }
-  55%  { transform: rotateX(28deg) translateY(0); }
-  100% { transform: rotateX(0deg) translateY(0); }
-}
-
-.scene-2.active .laptop.closed .laptop-screen {
-  animation: openLaptopFullHeightFixed 2.1s cubic-bezier(.2,.8,.2,1) forwards !important;
-}
-
-.scene-2 .laptop-base,
-.scene-3 .laptop-base {
-  position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 1 !important;
-}
-
-.scene-2 .laptop-screen,
-.scene-3 .laptop-screen {
-  z-index: 2 !important;
-  margin-bottom: -4px !important;
-}
-
-
-
-/* === SIMPLE CLEANUP PATCH: remove intro/final box + restore final panel formatting === */
-
-/* Remove the visible boxed background/grid/rings entirely */
-.signal-grid,
-.data-ring,
-.ring-one,
-.ring-two,
-.scene-grid,
-.grid-shell,
-.scene-ring {
-  display: none !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.stage {
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-/* Restore final screen formatting */
-.final-screen {
-  margin-top: 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.final-stage,
-.question-stage {
-  min-height: auto !important;
-  height: auto !important;
-  padding-bottom: 24px !important;
-}
-
-.game-wrap {
-  min-height: auto !important;
-  height: auto !important;
-  padding-bottom: 36px !important;
-}
-
-/* Keep the rounded content panels looking polished */
-.final-hero,
-.final-chart-panel,
-.comment-panel,
-.final-advice,
-.final-stat-card,
-.results-panel,
-.question-card {
-  border-radius: 28px !important;
-  overflow: hidden !important;
-}
-
-/* Remove the odd line / tail at the bottom */
-.final-stage::after,
-.game-wrap::after,
-.game-screen::after {
-  content: none !important;
-  display: none !important;
-}
-
-/* Light theme panels stay rounded and readable */
-html.light .final-chart-panel,
-html.light .comment-panel,
-html.light .final-advice,
-html.light .final-stat-card {
-  border-radius: 28px !important;
-  overflow: hidden !important;
-}
-
-
-
-/* === REAL FIX: remove boxed overlay + full-width stage + bubbles visible === */
-.stage {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  transform: none !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.signal-grid,
-.data-ring,
-.ring-one,
-.ring-two,
-.hero-beam,
-.mobile-intro-backdrop,
-.scene-grid,
-.grid-shell,
-.scene-ring {
-  display: none !important;
-  background: none !important;
-  background-image: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.notification-field {
-  position: absolute !important;
-  inset: 0 !important;
-  z-index: 15 !important;
-  pointer-events: none !important;
-}
-
-.notify-template,
-.notify-card {
-  min-width: 220px !important;
-  max-width: 260px !important;
-}
-
-.notify-card.live {
-  animation: bubblePopCard 3.6s ease-in-out forwards !important;
-}
-.notify-card.live::after {
-  animation: bubbleRipple 2.2s ease-out forwards !important;
-}
-
-
-
-/* === STAGE/BACKDROP FIX: remove the actual visible box, not the layout container === */
-.stage,
-.scene,
-.experience {
-  background: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* The visible rectangle was the scene backdrop layer, not the fish */
-.backdrop,
-.city-glow,
-.scene-1 .backdrop,
-.scene-2 .backdrop,
-.scene-3 .backdrop,
-.scene-4 .backdrop,
-.signal-grid,
-.data-ring,
-.ring-one,
-.ring-two,
-.hero-beam,
-.mobile-intro-backdrop,
-.scene-grid,
-.grid-shell,
-.scene-ring {
-  display: none !important;
-  background: none !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* Keep bubbles above the scene and clearly visible */
-.notification-field {
-  position: absolute !important;
-  inset: 0 !important;
-  z-index: 20 !important;
-  pointer-events: none !important;
-}
-
-.notify-template,
-.notify-card {
-  min-width: 220px !important;
-  max-width: 260px !important;
-  opacity: 0 !important;
-}
-
-.notify-card.live {
-  animation: bubblePopCard 3.8s ease-in-out forwards !important;
-}
-
-.notify-card.live::after {
-  animation: bubbleRipple 2.2s ease-out forwards !important;
+@media (max-width: 600px) {
+  .feedback-cta-inner { flex-direction: column; align-items: flex-start; }
+  .feedback-cta-btn { width: 100%; text-align: center; justify-content: center; }
 }

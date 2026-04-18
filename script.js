@@ -1,4 +1,78 @@
 
+// ===== THEME SYSTEM =====
+(function() {
+  const root = document.documentElement;
+  const STORAGE_KEY = 'a360-theme';
+
+  function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme) {
+    if (theme === 'light') {
+      root.setAttribute('data-theme', 'light');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+    // Update toggle UI
+    const icon = document.getElementById('themeIcon');
+    const label = document.getElementById('themeLabel');
+    if (icon) icon.textContent = theme === 'light' ? '☀️' : '🌙';
+    if (label) label.textContent = theme === 'light' ? 'Light' : 'Dark';
+  }
+
+  function getCurrentTheme() {
+    return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  }
+
+  // Always read system preference fresh — only use stored value if user manually toggled THIS session
+  // (prevents stale localStorage from a dev/test session overriding the browser default)
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const systemTheme = getSystemTheme();
+
+  // If stored value matches system, treat it as "no manual override" so system changes still apply
+  const initial = (stored && stored !== systemTheme) ? stored : systemTheme;
+  applyTheme(initial);
+
+  // Listen for system theme changes — apply unless user manually picked the opposite
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+    const manualOverride = localStorage.getItem(STORAGE_KEY);
+    const newSystem = e.matches ? 'light' : 'dark';
+    // Only skip if user explicitly picked the OTHER theme
+    if (!manualOverride || manualOverride === newSystem) {
+      applyTheme(newSystem);
+    }
+  });
+
+  // Wire up toggle button after DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    function syncAllToggles(theme) {
+      // Sync all toggle UIs on page
+      document.querySelectorAll('[id^="themeIcon"]').forEach(el => {
+        el.textContent = theme === 'light' ? '☀️' : '🌙';
+      });
+      document.querySelectorAll('[id^="themeLabel"]').forEach(el => {
+        el.textContent = theme === 'light' ? 'Light' : 'Dark';
+      });
+    }
+
+    // Initial sync
+    syncAllToggles(getCurrentTheme());
+
+    document.querySelectorAll('#themeToggle, #themeToggleGame').forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', function() {
+          const next = getCurrentTheme() === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+          syncAllToggles(next);
+          localStorage.setItem(STORAGE_KEY, next);
+        });
+      }
+    });
+  });
+})();
+
+
 const scenes = Array.from(document.querySelectorAll('.scene'));
 const progressFill = document.getElementById('progressFill');
 const controlCopy = document.getElementById('controlCopy');
@@ -28,8 +102,6 @@ const finalStage = document.getElementById('finalStage');
 const finalHeadline = document.getElementById('finalHeadline');
 const finalSummary = document.getElementById('finalSummary');
 const finalScore = document.getElementById('finalScore');
-const leaveFeedbackBtn = document.getElementById('leaveFeedbackBtn');
-const feedbackSection = document.getElementById('feedbackSection');
 const typicalScore = document.getElementById('typicalScore');
 const finalScorePill = document.getElementById('finalScorePill');
 const aggregateChart = document.getElementById('aggregateChart');
@@ -328,71 +400,163 @@ function swimFish(el, topRange) {
   setTimeout(() => swimFish(el, topRange), 10500);
 }
 
+// ===== AUDIO ENGINE =====
+let reverbNode = null;
+
 function initAudio() {
   if (audioCtx) return audioCtx;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) {
-    soundEnabled = false;
-    return null;
-  }
+  if (!AudioContextClass) { soundEnabled = false; return null; }
   audioCtx = new AudioContextClass();
+  // Build a simple plate reverb via convolver
+  try {
+    const rate = audioCtx.sampleRate;
+    const len = rate * 1.4;
+    const buf = audioCtx.createBuffer(2, len, rate);
+    for (let c = 0; c < 2; c++) {
+      const ch = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) {
+        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+      }
+    }
+    reverbNode = audioCtx.createConvolver();
+    reverbNode.buffer = buf;
+    const reverbGain = audioCtx.createGain();
+    reverbGain.gain.value = 0.18;
+    reverbNode.connect(reverbGain);
+    reverbGain.connect(audioCtx.destination);
+  } catch(e) { reverbNode = null; }
   return audioCtx;
 }
 
-function tone({ frequency = 440, type = 'sine', duration = 0.15, gain = 0.03, delay = 0 }) {
+/**
+ * Play a rich tone with ADSR envelope and optional harmonics.
+ * options: { frequency, type, attack, decay, sustain, release, gain, delay, detune, harmonics, reverb }
+ */
+function tone({ frequency = 440, type = 'sine', attack = 0.012, decay = 0.08, sustain = 0.6,
+                release = 0.22, gain = 0.028, delay = 0, detune = 0,
+                harmonics = false, reverb = true } = {}) {
   if (!soundEnabled) return;
   const ctx = initAudio();
   if (!ctx) return;
-  const now = ctx.currentTime + delay;
-  const osc = ctx.createOscillator();
-  const node = ctx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(frequency, now);
-  node.gain.setValueAtTime(0.0001, now);
-  node.gain.exponentialRampToValueAtTime(gain, now + 0.02);
-  node.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-  osc.connect(node);
-  node.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + duration + 0.03);
+  const t = ctx.currentTime + delay;
+
+  function makeVoice(freq, vol, det = 0) {
+    const osc = ctx.createOscillator();
+    const env = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (det) osc.detune.setValueAtTime(det, t);
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.linearRampToValueAtTime(vol, t + attack);
+    env.gain.linearRampToValueAtTime(vol * sustain, t + attack + decay);
+    env.gain.setValueAtTime(vol * sustain, t + attack + decay);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay + release);
+    osc.connect(env);
+    env.connect(ctx.destination);
+    if (reverb && reverbNode) env.connect(reverbNode);
+    osc.start(t);
+    osc.stop(t + attack + decay + release + 0.05);
+  }
+
+  makeVoice(frequency, gain);
+  // Slight stereo warmth via detuned pair
+  if (harmonics) {
+    makeVoice(frequency * 2, gain * 0.18, detune + 4);
+    makeVoice(frequency * 3, gain * 0.08, detune - 3);
+  }
+  // Gentle detuned double for richness
+  makeVoice(frequency, gain * 0.22, detune + 6);
 }
 
-function chord(freqs, options = {}) {
-  freqs.forEach((f, i) => tone({ ...options, frequency: f, delay: (options.delay || 0) + i * 0.02 }));
+function chord(freqs, opts = {}) {
+  freqs.forEach((f, i) => tone({ ...opts, frequency: f, delay: (opts.delay || 0) + i * 0.018 }));
 }
 
+// UI feedback click — quick crisp tick
+function playClickSound() {
+  tone({ frequency: 880, type: 'sine', attack: 0.004, decay: 0.04, sustain: 0.1, release: 0.06, gain: 0.018, reverb: false });
+}
+
+// Correct answer — bright ascending arp
+function playCorrectSound() {
+  const notes = [523, 659, 784];
+  notes.forEach((f, i) => tone({ frequency: f, type: 'sine', attack: 0.01, decay: 0.10, sustain: 0.5, release: 0.28, gain: 0.026, delay: i * 0.09, harmonics: true }));
+  // Sparkle high
+  tone({ frequency: 1047, type: 'sine', attack: 0.006, decay: 0.06, sustain: 0.2, release: 0.18, gain: 0.014, delay: 0.26 });
+}
+
+// Wrong answer — soft descending minor 3rd
+function playWrongSound() {
+  tone({ frequency: 330, type: 'triangle', attack: 0.01, decay: 0.14, sustain: 0.4, release: 0.28, gain: 0.024, delay: 0 });
+  tone({ frequency: 277, type: 'triangle', attack: 0.01, decay: 0.18, sustain: 0.3, release: 0.32, gain: 0.020, delay: 0.12 });
+}
+
+// Scene transition — airy whoosh feel
+function playSceneSound(index) {
+  if (index === 0) {
+    // Intro ambient hum: open 5th
+    chord([110, 165, 220], { type: 'sine', attack: 0.25, decay: 0.4, sustain: 0.5, release: 0.8, gain: 0.010 });
+  } else if (index === 1) {
+    tone({ frequency: 440, type: 'sine', attack: 0.02, decay: 0.10, sustain: 0.3, release: 0.22, gain: 0.018 });
+    tone({ frequency: 660, type: 'sine', attack: 0.02, decay: 0.08, sustain: 0.2, release: 0.18, gain: 0.012, delay: 0.18 });
+  } else if (index === 2) {
+    // Tension: descending half-steps
+    [740, 698, 659].forEach((f, i) => tone({ frequency: f, type: 'sine', attack: 0.008, decay: 0.10, sustain: 0.3, release: 0.20, gain: 0.018, delay: i * 0.28 }));
+  } else if (index === 3) {
+    // Title card: bright major triad swell
+    chord([392, 494, 587], { type: 'triangle', attack: 0.05, decay: 0.20, sustain: 0.55, release: 0.50, gain: 0.022, harmonics: true });
+  }
+}
+
+// Enter game — smooth rising major arpeggio, single voice per note, no clashing
 function playEnterGameSound() {
-  chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
+  // Clean C major arpeggio: C4 → E4 → G4 → C5, spaced evenly
+  [261, 329, 392, 523].forEach((f, i) =>
+    tone({ frequency: f, type: 'sine', attack: 0.015, decay: 0.14, sustain: 0.35,
+           release: 0.32, gain: 0.024, delay: i * 0.11, harmonics: false, reverb: true })
+  );
+  // Soft warm chord bloom underneath at the end
+  chord([261, 329, 392], { type: 'triangle', attack: 0.06, decay: 0.20, sustain: 0.45,
+    release: 0.55, gain: 0.014, delay: 0.40, harmonics: false });
 }
 
+// Perfect score — jubilant fanfare
 function playVictorySong() {
-  chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
-  tone({ frequency: 196, type: 'sine', duration: 0.12, gain: 0.02, delay: 0.00 });
-  tone({ frequency: 196, type: 'sine', duration: 0.12, gain: 0.018, delay: 0.42 });
-  chord([494, 587, 740], { type: 'triangle', duration: 0.28, gain: 0.02, delay: 0.22 });
-  chord([523, 659, 784], { type: 'triangle', duration: 0.32, gain: 0.022, delay: 0.72 });
-  tone({ frequency: 262, type: 'sine', duration: 0.14, gain: 0.018, delay: 1.04 });
-  chord([587, 740, 880], { type: 'triangle', duration: 0.48, gain: 0.022, delay: 1.18 });
+  // Bass hit
+  tone({ frequency: 196, type: 'triangle', attack: 0.008, decay: 0.22, sustain: 0.4, release: 0.40, gain: 0.030, delay: 0 });
+  // Rising triad
+  chord([392, 494, 587], { type: 'triangle', attack: 0.015, decay: 0.20, sustain: 0.55, release: 0.45, gain: 0.026, delay: 0.05, harmonics: true });
+  // Second chord up a 4th
+  chord([523, 659, 784], { type: 'triangle', attack: 0.015, decay: 0.22, sustain: 0.55, release: 0.50, gain: 0.026, delay: 0.55, harmonics: true });
+  // Octave jump sparkle
+  tone({ frequency: 1047, type: 'sine', attack: 0.008, decay: 0.10, sustain: 0.3, release: 0.25, gain: 0.018, delay: 0.72 });
+  // Final flourish: high arp
+  [784, 880, 1047, 1175].forEach((f, i) => tone({ frequency: f, type: 'sine', attack: 0.006, decay: 0.08, sustain: 0.2, release: 0.22, gain: 0.016, delay: 0.95 + i * 0.09 }));
+  // Warm low chord landing
+  chord([261, 329, 392], { type: 'triangle', attack: 0.04, decay: 0.30, sustain: 0.6, release: 0.80, gain: 0.022, delay: 1.35, harmonics: true });
 }
 
+// Partial score — hopeful, bittersweet
+function playPartialSong() {
+  chord([330, 415, 494], { type: 'triangle', attack: 0.02, decay: 0.18, sustain: 0.45, release: 0.50, gain: 0.024, delay: 0, harmonics: true });
+  tone({ frequency: 494, type: 'sine', attack: 0.01, decay: 0.14, sustain: 0.35, release: 0.38, gain: 0.018, delay: 0.45 });
+  chord([370, 466, 554], { type: 'triangle', attack: 0.025, decay: 0.20, sustain: 0.45, release: 0.55, gain: 0.022, delay: 0.72, harmonics: true });
+}
+
+// Zero score — gentle consolation (not harsh)
 function playLoseSong() {
-  tone({ frequency: 174, type: 'triangle', duration: 0.28, gain: 0.018, delay: 0.00 });
-  tone({ frequency: 146, type: 'triangle', duration: 0.30, gain: 0.018, delay: 0.30 });
-  tone({ frequency: 130, type: 'triangle', duration: 0.42, gain: 0.018, delay: 0.62 });
-  tone({ frequency: 98, type: 'sine', duration: 0.10, gain: 0.014, delay: 0.12 });
-  tone({ frequency: 98, type: 'sine', duration: 0.10, gain: 0.012, delay: 0.54 });
+  tone({ frequency: 294, type: 'triangle', attack: 0.02, decay: 0.22, sustain: 0.4, release: 0.50, gain: 0.024, delay: 0 });
+  tone({ frequency: 247, type: 'triangle', attack: 0.02, decay: 0.24, sustain: 0.35, release: 0.55, gain: 0.020, delay: 0.32 });
+  tone({ frequency: 220, type: 'triangle', attack: 0.02, decay: 0.30, sustain: 0.35, release: 0.65, gain: 0.020, delay: 0.68 });
+  // Soft low resolution
+  tone({ frequency: 165, type: 'sine', attack: 0.04, decay: 0.40, sustain: 0.5, release: 0.80, gain: 0.018, delay: 1.0 });
 }
 
 function playFinalSong() {
-  if (totalCorrect === QUESTIONS.length) {
-    playVictorySong();
-    return;
-  }
-  if (totalCorrect === 0) {
-    playLoseSong();
-    return;
-  }
-  playEnterGameSound();
+  if (totalCorrect === QUESTIONS.length) { playVictorySong(); return; }
+  if (totalCorrect === 0) { playLoseSong(); return; }
+  playPartialSong();
 }
 
 function initGameBubbles() {
@@ -434,104 +598,98 @@ function clearNotifications() {
   }
 }
 
+// Extended pool of notification messages with variety
+const NOTIFY_POOL = [
+  { accent: 'cyan',   dot: '',       title: 'Inbox activity',        body: '3 new messages detected' },
+  { accent: 'amber',  dot: 'amber',  title: 'Urgent request',        body: 'Review before you click' },
+  { accent: 'purple', dot: 'purple', title: 'Email challenge',        body: 'Can your team spot it?' },
+  { accent: 'cyan',   dot: '',       title: 'IT Security Alert',      body: 'Suspicious link detected' },
+  { accent: 'amber',  dot: 'amber',  title: 'Password Expiry',        body: 'Reset required within 24 hrs' },
+  { accent: 'purple', dot: 'purple', title: 'HR Notification',        body: 'Action needed: payroll update' },
+  { accent: 'cyan',   dot: '',       title: 'Microsoft 365',          body: 'Verify your account now' },
+  { accent: 'amber',  dot: 'amber',  title: 'Wire Transfer Request',  body: 'Approve before close of day' },
+  { accent: 'purple', dot: 'purple', title: 'Shared Document',        body: 'Click to view: Q4_Financials' },
+  { accent: 'cyan',   dot: '',       title: 'Delivery Notice',        body: 'Confirm your address below' },
+  { accent: 'amber',  dot: 'amber',  title: 'CEO Message',            body: 'Need gift cards ASAP – urgent' },
+  { accent: 'purple', dot: 'purple', title: 'Dropbox',                body: 'File shared with you – open now' },
+  { accent: 'cyan',   dot: '',       title: 'Account Suspended',      body: 'Verify identity to restore' },
+  { accent: 'amber',  dot: 'amber',  title: 'Invoice #4821',          body: 'Payment due: click to review' },
+  { accent: 'purple', dot: 'purple', title: 'VPN Access Request',     body: 'Approve new device login?' },
+];
+
+let lastNotifyIndex = -1;
+const activeNotifySet = new Set();
+
 function spawnNotificationBubble() {
   if (!notificationField) return;
 
-  const templates = [
-    { key: 'A', el: notifyTemplateA },
-    { key: 'B', el: notifyTemplateB },
-    { key: 'C', el: notifyTemplateC }
-  ].filter((item) => item.el);
+  // Pick a random message, never the same as last, never one currently on screen
+  let idx;
+  let attempts = 0;
+  do {
+    idx = Math.floor(Math.random() * NOTIFY_POOL.length);
+    attempts++;
+  } while ((idx === lastNotifyIndex || activeNotifySet.has(idx)) && attempts < 20);
+  lastNotifyIndex = idx;
+  activeNotifySet.add(idx);
 
-  if (!templates.length) return;
+  const msg = NOTIFY_POOL[idx];
 
-  const visibleKeys = new Set(
-    Array.from(notificationField.querySelectorAll('.notify-card.live'))
-      .map((el) => el.dataset.templateKey)
-      .filter(Boolean)
-  );
+  // Build the card from scratch so we don't depend on template cloning
+  const card = document.createElement('div');
+  card.className = `notify-card notify-template ${msg.accent} live`;
 
-  if (!window.__spotLastNotifyKey) window.__spotLastNotifyKey = null;
+  const dot = document.createElement('div');
+  dot.className = `float-dot${msg.dot ? ' ' + msg.dot : ''}`;
 
-  let pool = templates.filter((item) => !visibleKeys.has(item.key) && item.key !== window.__spotLastNotifyKey);
-  if (!pool.length) pool = templates.filter((item) => !visibleKeys.has(item.key));
-  if (!pool.length) pool = templates;
+  const copy = document.createElement('div');
+  copy.className = 'float-copy';
+  copy.innerHTML = `<strong>${msg.title}</strong><span>${msg.body}</span>`;
 
-  const selected = pool[Math.floor(Math.random() * pool.length)];
-  window.__spotLastNotifyKey = selected.key;
+  card.appendChild(dot);
+  card.appendChild(copy);
 
-  const clone = selected.el.cloneNode(true);
-  clone.removeAttribute('id');
-  clone.classList.add('live');
-  clone.dataset.templateKey = selected.key;
+  // Safe spawn zone: avoid the center card (roughly center 40% x 30-70% y)
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const cardW = 260;
+  const cardH = 70;
+  const safeLeft = W * 0.30;
+  const safeRight = W * 0.70;
+  const safeTop = H * 0.30;
+  const safeBot = H * 0.70;
 
-  const cardW = window.innerWidth <= 900 ? 220 : 250;
-  const cardH = window.innerWidth <= 900 ? 80 : 90;
-  const pad = 26;
-
-  const blockers = Array.from(document.querySelectorAll('.intro-center, .caption, .center-prompt, .title-card'))
-    .filter((el) => el && el.offsetParent !== null)
-    .map((el) => el.getBoundingClientRect());
-
-  function overlaps(x, y) {
-    const r = { left: x, top: y, right: x + cardW, bottom: y + cardH };
-    return blockers.some((b) => !(r.right < b.left - 18 || r.left > b.right + 18 || r.bottom < b.top - 18 || r.top > b.bottom + 18));
+  let x, y, safe = false, tries = 0;
+  while (!safe && tries < 30) {
+    x = Math.max(16, Math.floor(Math.random() * Math.max(80, W - cardW - 24)));
+    y = Math.max(70, Math.floor(Math.random() * Math.max(160, H - cardH - 80)));
+    // Outside the center safe zone
+    const xOk = x + cardW < safeLeft || x > safeRight;
+    const yOk = y + cardH < safeTop || y > safeBot;
+    safe = xOk || yOk;
+    tries++;
   }
 
-  const zones = [
-    { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
-    { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
-    { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) },
-    { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) }
-  ];
+  card.style.left = `${x}px`;
+  card.style.top = `${y}px`;
+  notificationField.appendChild(card);
 
-  let x = pad;
-  let y = 100;
-  let placed = false;
-
-  for (let i = 0; i < 20; i += 1) {
-    const zone = zones[Math.floor(Math.random() * zones.length)];
-    const xr = Math.max(1, zone.xMax - zone.xMin);
-    const yr = Math.max(1, zone.yMax - zone.yMin);
-    const cx = Math.floor(zone.xMin + Math.random() * xr);
-    const cy = Math.floor(zone.yMin + Math.random() * yr);
-    if (!overlaps(cx, cy)) {
-      x = cx;
-      y = cy;
-      placed = true;
-      break;
-    }
-  }
-
-  clone.style.left = `${x}px`;
-  clone.style.top = `${y}px`;
-  notificationField.appendChild(clone);
-  setTimeout(() => clone.remove(), 3800);
+  const lifetime = 2800;
+  setTimeout(() => {
+    card.remove();
+    activeNotifySet.delete(idx);
+  }, lifetime);
 }
-
-
-/* JS patch marker */
-function getVisibleIntroBlockers() {
-  return Array.from(document.querySelectorAll('.intro-center, .scene-2 .caption.right, .scene-3 .center-prompt, .scene-4 .title-card, .caption, .center-prompt, .title-card'))
-    .filter((el) => el && el.offsetParent !== null)
-    .map((el) => el.getBoundingClientRect());
-}
-
-function pointHitsBlocker(x, y, w, h, blockers) {
-  const rect = { left: x, top: y, right: x + w, bottom: y + h };
-  return blockers.some((b) => !(rect.right < b.left - 14 || rect.left > b.right + 14 || rect.bottom < b.top - 14 || rect.top > b.bottom + 14));
-}
-
 
 function startNotificationBubbles() {
   clearNotifications();
-  spawnNotificationBubble();
-  if (notifyInterval) clearInterval(notifyInterval);
-  notifyInterval = setInterval(spawnNotificationBubble, 1800);
+  // Initial bubble after a short delay so the scene settles first
+  setTimeout(spawnNotificationBubble, 600);
+  // Slower cadence: one every 2.2s instead of 0.9s
+  notifyInterval = setInterval(spawnNotificationBubble, 2200);
 }
 
-
-function activateScene(index) {
+function activateScene(index, silent = false) {
   if (index > scenes.length - 1) return;
   scenes.forEach((scene, i) => scene.classList.toggle('active', i === index));
   currentScene = index;
@@ -543,24 +701,19 @@ function activateScene(index) {
     laptop.classList.add('closed');
   }
 
-  if (index === 0) {
-    chord([220, 330, 440], { type: 'triangle', duration: 1.0, gain: 0.010 });
-    startNotificationBubbles();
+  if (!silent) {
+    if (index === 0) {
+      playSceneSound(0);
+      startNotificationBubbles();
+    } else {
+      clearNotifications();
+    }
+    if (index === 1) playSceneSound(1);
+    if (index === 2) playSceneSound(2);
+    if (index === 3) playSceneSound(3);
   } else {
-    clearNotifications();
-  }
-  if (index === 1) {
-    tone({ frequency: 250, type: 'triangle', duration: 0.2, gain: 0.03 });
-    tone({ frequency: 520, type: 'sine', duration: 0.25, gain: 0.02, delay: 1.2 });
-  }
-  if (index === 2) {
-    tone({ frequency: 880, type: 'sine', duration: 0.08, gain: 0.030, delay: 0.55 });
-    tone({ frequency: 780, type: 'sine', duration: 0.08, gain: 0.030, delay: 1.08 });
-    tone({ frequency: 680, type: 'sine', duration: 0.08, gain: 0.030, delay: 1.62 });
-    chord([180, 240], { type: 'sawtooth', duration: 1.6, gain: 0.006, delay: 2.0 });
-  }
-  if (index === 3) {
-    chord([392, 494, 587], { type: 'triangle', duration: 0.7, gain: 0.025 });
+    if (index === 0) startNotificationBubbles();
+    else clearNotifications();
   }
 
   clearTimeout(sceneTimer);
@@ -594,18 +747,18 @@ function beginIntroSequence() {
   activateScene(1);
 }
 
-function finishIntro() {
+function finishIntro(silent = false) {
   introDone = true;
   clearTimeout(sceneTimer);
   clearInterval(progressTimer);
   setControlCopy('Intro complete. Spot the Phish is ready.');
   setProgressWidth('100%');
-  activateScene(3);
+  activateScene(3, silent);
 }
 
 function showGame() {
   clearNotifications();
-  finishIntro();
+  finishIntro(true); // silent — we play our own enter sound
   experience.classList.add('hidden');
   gameScreen.classList.remove('hidden');
   gameScreen.classList.add('show');
@@ -687,8 +840,7 @@ function handleChoice(choiceId) {
     nextBtn.classList.remove('hidden');
   }
 
-  tone({ frequency: isCorrect ? 640 : 240, type: isCorrect ? 'triangle' : 'sawtooth', duration: 0.25, gain: 0.03 });
-  if (isCorrect) tone({ frequency: 820, type: 'sine', duration: 0.22, gain: 0.02, delay: 0.08 });
+  if (isCorrect) { playCorrectSound(); } else { playWrongSound(); }
 }
 
 async function showFinalScreen() {
@@ -720,28 +872,6 @@ async function showFinalScreen() {
   }
 }
 
-function scrollToFeedbackSection() {
-  if (!feedbackSection) return;
-
-  const scrollContainer = finalStage && finalStage.scrollHeight > finalStage.clientHeight
-    ? finalStage
-    : document.scrollingElement || document.documentElement;
-
-  const containerRect = scrollContainer.getBoundingClientRect ? scrollContainer.getBoundingClientRect() : { top: 0 };
-  const sectionRect = feedbackSection.getBoundingClientRect();
-  const currentTop = scrollContainer.scrollTop || 0;
-  const targetTop = currentTop + (sectionRect.top - containerRect.top) - 20;
-
-  scrollContainer.scrollTo({
-    top: Math.max(targetTop, 0),
-    behavior: 'smooth'
-  });
-
-  window.setTimeout(() => {
-    if (commentName) commentName.focus({ preventScroll: true });
-  }, 350);
-}
-
 function restartGame() {
   currentQuestion = 0;
   answered = false;
@@ -758,6 +888,22 @@ function restartGame() {
 
 if (skipBtn) skipBtn.addEventListener('click', finishIntro);
 if (startBtn) startBtn.addEventListener('click', showGame);
+
+// Feedback CTA — scroll to comment panel and focus name field
+const feedbackCtaBtn = document.getElementById('feedbackCtaBtn');
+if (feedbackCtaBtn) {
+  feedbackCtaBtn.addEventListener('click', () => {
+    const panel = document.getElementById('commentPanel');
+    const gameScreen = document.getElementById('gameScreen');
+    if (panel && gameScreen) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        const nameInput = document.getElementById('commentName');
+        if (nameInput) nameInput.focus();
+      }, 500);
+    }
+  });
+}
 if (nextBtn) nextBtn.addEventListener('click', () => {
   if (currentQuestion < QUESTIONS.length - 1) {
     loadQuestion(currentQuestion + 1);
@@ -767,7 +913,6 @@ if (nextBtn) nextBtn.addEventListener('click', () => {
 });
 if (restartBtn) restartBtn.addEventListener('click', restartGame);
 if (restartFromFinalBtn) restartFromFinalBtn.addEventListener('click', restartGame);
-if (leaveFeedbackBtn) leaveFeedbackBtn.addEventListener('click', scrollToFeedbackSection);
 if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
   const name = commentName ? commentName.value.trim() : '';
   const message = commentMessage ? commentMessage.value.trim() : '';
@@ -820,32 +965,6 @@ if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
   }
 });
 
-
-const themeToggle = document.getElementById('themeToggle');
-
-function getSystemTheme() {
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function applyTheme(theme) {
-  const isLight = theme === 'light';
-  document.documentElement.classList.toggle('light', isLight);
-  document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
-  if (themeToggle) {
-    themeToggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
-    themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-  }
-}
-
-applyTheme(getSystemTheme());
-
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    const nextTheme = document.documentElement.classList.contains('light') ? 'dark' : 'light';
-    applyTheme(nextTheme);
-  });
-}
-
 window.addEventListener('pointerdown', async () => {
   const ctx = initAudio();
   if (ctx?.state === 'suspended') await ctx.resume();
@@ -859,125 +978,3 @@ swimFish(introPhish, 70);
 swimFish(gamePhish, 15);
 
 activateScene(0);
-
-
-(function () {
-  function syncViewportMode() {
-    document.documentElement.classList.toggle('is-mobile-intro', window.innerWidth <= 900);
-  }
-  syncViewportMode();
-  window.addEventListener('resize', syncViewportMode, { passive: true });
-})();
-
-
-let lastNotificationTemplateKey = null;
-
-
-
-/* === REAL FIX: bubbles restore + safe intro click === */
-(function () {
-  let __spotLastKey = null;
-
-  function fixedSpawnNotificationBubble() {
-    if (!notificationField) return;
-
-    const templates = [
-      { key: 'A', el: notifyTemplateA },
-      { key: 'B', el: notifyTemplateB },
-      { key: 'C', el: notifyTemplateC }
-    ].filter((item) => item.el);
-
-    if (!templates.length) return;
-
-    const visibleKeys = new Set(
-      Array.from(notificationField.querySelectorAll('.notify-card.live'))
-        .map((el) => el.dataset.templateKey)
-        .filter(Boolean)
-    );
-
-    let pool = templates.filter((item) => !visibleKeys.has(item.key) && item.key !== __spotLastKey);
-    if (!pool.length) pool = templates.filter((item) => !visibleKeys.has(item.key));
-    if (!pool.length) pool = templates;
-
-    const selected = pool[Math.floor(Math.random() * pool.length)];
-    __spotLastKey = selected.key;
-
-    const clone = selected.el.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.classList.add('live');
-    clone.dataset.templateKey = selected.key;
-
-    const cardW = window.innerWidth <= 900 ? 220 : 250;
-    const cardH = window.innerWidth <= 900 ? 80 : 90;
-    const pad = 28;
-
-    const blockers = Array.from(document.querySelectorAll('.intro-center, .caption, .center-prompt, .title-card'))
-      .filter((el) => el && el.offsetParent !== null)
-      .map((el) => el.getBoundingClientRect());
-
-    function overlaps(x, y) {
-      const r = { left: x, top: y, right: x + cardW, bottom: y + cardH };
-      return blockers.some((b) => !(r.right < b.left - 18 || r.left > b.right + 18 || r.bottom < b.top - 18 || r.top > b.bottom + 18));
-    }
-
-    const zones = [
-      { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
-      { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
-      { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) },
-      { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) }
-    ];
-
-    let x = pad;
-    let y = 100;
-    let placed = false;
-
-    for (let i = 0; i < 20; i++) {
-      const zone = zones[Math.floor(Math.random() * zones.length)];
-      const xr = Math.max(1, zone.xMax - zone.xMin);
-      const yr = Math.max(1, zone.yMax - zone.yMin);
-      const cx = Math.floor(zone.xMin + Math.random() * xr);
-      const cy = Math.floor(zone.yMin + Math.random() * yr);
-      if (!overlaps(cx, cy)) {
-        x = cx;
-        y = cy;
-        placed = true;
-        break;
-      }
-    }
-
-    if (!placed) {
-      x = pad;
-      y = 100;
-    }
-
-    clone.style.left = `${x}px`;
-    clone.style.top = `${y}px`;
-    notificationField.appendChild(clone);
-    setTimeout(() => clone.remove(), 3800);
-  }
-
-  function fixedStartNotificationBubbles() {
-    if (typeof clearNotifications === 'function') clearNotifications();
-    fixedSpawnNotificationBubble();
-    if (typeof notifyInterval !== 'undefined' && notifyInterval) clearInterval(notifyInterval);
-    notifyInterval = setInterval(fixedSpawnNotificationBubble, 1800);
-  }
-
-  const originalActivateScene = typeof activateScene === 'function' ? activateScene : null;
-  if (originalActivateScene) {
-    activateScene = function(index) {
-      originalActivateScene(index);
-      if (index === 0) fixedStartNotificationBubbles();
-    };
-  }
-
-  document.addEventListener('pointerdown', async function safeIntroStart() {
-    if (typeof initAudio === 'function') {
-      const ctx = initAudio();
-      if (ctx && ctx.state === 'suspended') await ctx.resume();
-    }
-    if (typeof introStarted !== 'undefined' && typeof introDone !== 'undefined' && !introStarted && !introDone && typeof beginIntroSequence === 'function') {
-      beginIntroSequence();
-    }
-  }, { once: true });
-})();

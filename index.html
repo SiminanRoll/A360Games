@@ -7,21 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    (function () {
-      try {
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (!prefersDark) {
-          document.documentElement.classList.add('light');
-          document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
-  </script>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -34,25 +19,24 @@
       <div class="ambient-orb orb-one"></div>
       <div class="ambient-orb orb-two"></div>
       <div class="ambient-orb orb-three"></div>
-      <div class="phish-character" id="introPhish"><img src="./assets/fish1.png" alt=""></div>
+      <div class="phish-character" id="introPhish" style="display:none"></div>
 
       <header class="hud">
-        <div class="top-controls">
-          <button id="themeToggle" class="theme-toggle switch-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false">
-            <span class="switch-track">
-              <span class="switch-thumb"></span>
-            </span>
-          </button>
-          <button class="skip-btn" id="skipBtn">Skip Intro</button>
-        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark theme">
+          <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+          <div class="theme-toggle-track">
+            <div class="theme-toggle-thumb"></div>
+          </div>
+          <span class="theme-toggle-label" id="themeLabel">Dark</span>
+        </button>
+        <button class="skip-btn" id="skipBtn">Skip Intro</button>
       </header>
 
       <main class="stage">
-        <div class="mobile-intro-backdrop" aria-hidden="true"></div>
         
 <section class="scene scene-1 active" data-scene="1">
   <div class="backdrop city-glow"></div>
-  
+  <div class="phish-character" id="introPhish"><img src="./assets/fish1.png" alt=""></div>
 <div class="signal-grid"></div>
   <div class="data-ring ring-one"></div>
   <div class="data-ring ring-two"></div>
@@ -174,6 +158,15 @@
       <div class="game-bubbles" id="gameBubbles" aria-hidden="true"></div>
       <div class="scanlines"></div>
       <div class="vignette"></div>
+      <div class="game-theme-bar">
+        <button class="theme-toggle" id="themeToggleGame" aria-label="Toggle light/dark theme">
+          <span class="theme-toggle-icon" id="themeIconGame">🌙</span>
+          <div class="theme-toggle-track">
+            <div class="theme-toggle-thumb"></div>
+          </div>
+          <span class="theme-toggle-label" id="themeLabelGame">Dark</span>
+        </button>
+      </div>
 
       <div class="game-wrap" id="gameWrap">
         <div class="question-stage" id="questionStage">
@@ -226,7 +219,6 @@
                 <div class="eyebrow">Thanks for taking the challenge</div>
                 <h3 id="finalHeadline">You spotted 0 of 3 phish.</h3>
                 <p id="finalSummary">Most teams catch about 0 of 3 on their first pass.</p>
-                <button class="start-btn final-feedback-btn" id="leaveFeedbackBtn" type="button">Leave Feedback</button>
               </div>
               <div class="final-stat-grid">
                 <div class="final-stat-card">
@@ -262,7 +254,17 @@
               <p class="email-security-note" id="emailSecurityNote">Email security works best when technology and human caution work together. A quick pause is often the difference between a safe office and a preventable incident.</p>
             </div>
 
-            <div class="comment-panel" id="feedbackSection">
+            <div class="feedback-cta-bar" id="feedbackCtaBar">
+              <div class="feedback-cta-inner">
+                <div class="feedback-cta-text">
+                  <strong>Have a question or want to learn more?</strong>
+                  <span>Send Patric a note &#8212; it only takes 30 seconds.</span>
+                </div>
+                <button class="start-btn feedback-cta-btn" id="feedbackCtaBtn">&#x2709; Leave Feedback</button>
+              </div>
+            </div>
+
+            <div class="comment-panel" id="commentPanel">
               <div class="eyebrow">Send a note to Patric</div>
               <h3>Share feedback, ask a question, or suggest the next topic</h3>
               <p>If you would like Patric to follow up, leave your name and a quick note below. We also offer a cybersecurity training course for clients, so let us know if you would like to learn more about phishing awareness training for your team.</p>
