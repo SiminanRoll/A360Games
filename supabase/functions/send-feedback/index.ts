@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
     const siteLabel = payload.siteLabel || "Spot the Phish";
     const score = payload.score ?? "n/a";
     const answers = Array.isArray(payload.answers) ? payload.answers.join(", ") : "n/a";
+    const name = payload.name || "Anonymous";
     const message = payload.message || "";
 
     const { data, error } = await resend.emails.send({
@@ -59,6 +60,7 @@ Deno.serve(async (req) => {
       subject: `${siteLabel} feedback submission`,
       text: `New feedback submission
 
+Name: ${name}
 Score: ${score}
 Answers: ${answers}
 Session: ${payload.sessionId || "n/a"}

@@ -227,7 +227,7 @@
               <div class="eyebrow">What people typically choose</div>
               <h3>Response Breakdown</h3>
               <p>This shows the average pattern across all three scenarios.</p>
-              <p class="live-stats-status" id="liveStatsStatus">Live stats will appear here once Supabase is connected.</p>
+              <p class="live-stats-status" id="liveStatsStatus">Live participation stats will appear here as responses come in.</p>
               <div class="aggregate-chart" id="aggregateChart"></div>
             </div>
 
@@ -238,15 +238,16 @@
             </div>
 
             <div class="comment-panel">
-              <div class="eyebrow">Leave a comment for Patric</div>
-              <h3>Share feedback or suggest the next topic</h3>
-              <p>Your response can be saved and emailed to Patric once your Supabase edge function is connected. If you have an idea for the next topic or poll, let him know here.</p>
-              <textarea id="commentMessage" class="comment-textarea" placeholder="Share feedback, a question, or your idea for the next challenge..."></textarea>
+              <div class="eyebrow">Send a note to Patric</div>
+              <h3>Share feedback, ask a question, or suggest the next topic</h3>
+              <p>If you would like Patric to follow up, leave your name and a quick note below. We also offer cybersecurity awareness training for clients, so let us know if you want to learn more about training against phishing attacks.</p>
+              <input id="commentName" class="comment-input" type="text" placeholder="Your name" autocomplete="name">
+              <textarea id="commentMessage" class="comment-textarea" placeholder="Share feedback, ask a question, or tell us if you would like to learn more about phishing training..."></textarea>
               <div class="comment-actions">
                 <button class="ghost-btn" id="restartFromFinalBtn">Play Again</button>
-                <button class="start-btn" id="submitCommentBtn">Submit to Patric</button>
+                <button class="start-btn" id="submitCommentBtn">Send to Patric</button>
               </div>
-              <p class="comment-confirmation hidden" id="commentConfirmation">Thanks. For now this is a placeholder submission, but the message has been captured in the page and is intended to be sent to Patric once the backend is connected.</p>
+              <p class="comment-confirmation hidden" id="commentConfirmation">Thanks. Your note has been sent to Patric.</p>
             </div>
           </div>
         </div>

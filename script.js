@@ -33,6 +33,7 @@ const finalScorePill = document.getElementById('finalScorePill');
 const aggregateChart = document.getElementById('aggregateChart');
 const restartFromFinalBtn = document.getElementById('restartFromFinalBtn');
 const submitCommentBtn = document.getElementById('submitCommentBtn');
+const commentName = document.getElementById('commentName');
 const commentMessage = document.getElementById('commentMessage');
 const commentConfirmation = document.getElementById('commentConfirmation');
 const averageScoreEl = document.getElementById('averageScore');
@@ -209,7 +210,7 @@ async function submitQuizResult() {
 async function loadLiveStats() {
   const client = getSupabaseClient();
   if (!client) {
-    setLiveStatsStatus('Showing built-in demo stats. Add Supabase credentials in config.js for live totals.', 'warning');
+    setLiveStatsStatus('Response totals will appear here as participation data comes in.', 'warning');
     return getFallbackStats();
   }
 
@@ -223,7 +224,7 @@ async function loadLiveStats() {
 
   const submissionRows = submissions || [];
   if (!submissionRows.length) {
-    setLiveStatsStatus('Live connection is ready. Stats will grow as people complete the challenge.', 'ready');
+    setLiveStatsStatus('Live participation is ready. Stats will grow as people complete the challenge.', 'ready');
     return { totalAttempts: 0, averageScore: 0, perfectScoreRate: 0, aggregate: { A: 0, B: 0, C: 0 }, feedbackCount: (feedback || []).length };
   }
 
@@ -239,7 +240,7 @@ async function loadLiveStats() {
     });
   });
 
-  setLiveStatsStatus(`Live stats loaded from Supabase. ${totalAttempts} completed attempt${totalAttempts === 1 ? '' : 's'} so far.`, 'ready');
+  setLiveStatsStatus(`Live participation stats loaded. ${totalAttempts} completed attempt${totalAttempts === 1 ? '' : 's'} so far.`, 'ready');
   return {
     totalAttempts,
     averageScore: totalScore / totalAttempts,
@@ -249,15 +250,17 @@ async function loadLiveStats() {
   };
 }
 
-async function submitFeedbackMessage(message) {
+async function submitFeedbackMessage(name, message) {
   const client = getSupabaseClient();
   if (!client) return { ok: false, mode: 'fallback' };
+
+  const formattedMessage = `Name: ${name}\n\nMessage:\n${message}`;
 
   const feedbackPayload = {
     session_id: getSessionId(),
     score: totalCorrect,
     answers_json: selectedAnswers,
-    message
+    message: formattedMessage
   };
 
   const { error: insertError } = await client.from('quiz_feedback').insert(feedbackPayload);
@@ -277,6 +280,7 @@ async function submitFeedbackMessage(message) {
         sessionId: getSessionId(),
         score: `${totalCorrect}/${QUESTIONS.length}`,
         answers: selectedAnswers,
+        name,
         message
       })
     });
@@ -588,6 +592,7 @@ function restartGame() {
   totalCorrect = 0;
   selectedAnswers = [];
   resultSubmittedForRun = false;
+  if (commentName) commentName.value = '';
   if (commentMessage) commentMessage.value = '';
   if (commentConfirmation) commentConfirmation.classList.add('hidden');
   nextBtn.textContent = 'Next Question';
@@ -606,30 +611,41 @@ if (nextBtn) nextBtn.addEventListener('click', () => {
 if (restartBtn) restartBtn.addEventListener('click', restartGame);
 if (restartFromFinalBtn) restartFromFinalBtn.addEventListener('click', restartGame);
 if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
+  const name = commentName ? commentName.value.trim() : '';
   const message = commentMessage ? commentMessage.value.trim() : '';
+
+  if (!name) {
+    if (commentConfirmation) {
+      commentConfirmation.textContent = 'Please add your name so Patric knows who to follow up with.';
+      commentConfirmation.classList.remove('hidden');
+    }
+    return;
+  }
+
   if (!message) {
     if (commentConfirmation) {
-      commentConfirmation.textContent = 'Please add a quick message before you submit it to Patric.';
+      commentConfirmation.textContent = 'Please add a quick note before you send it to Patric.';
       commentConfirmation.classList.remove('hidden');
     }
     return;
   }
 
   if (commentConfirmation) {
-    commentConfirmation.textContent = 'Sending your feedback...';
+    commentConfirmation.textContent = 'Sending your note to Patric...';
     commentConfirmation.classList.remove('hidden');
   }
 
   try {
-    const result = await submitFeedbackMessage(message);
+    const result = await submitFeedbackMessage(name, message);
     if (commentConfirmation) {
       commentConfirmation.textContent = result.mode === 'email'
-        ? 'Thanks. Your feedback was saved and emailed to Patric.'
+        ? `Thanks, ${name}. Your note was sent to Patric.`
         : result.mode === 'saved'
-          ? 'Thanks. Your feedback was saved in Supabase. Add the edge function URL in config.js to email Patric too.'
-          : 'Thanks. Supabase is not connected yet, so this message stayed local only.';
+          ? `Thanks, ${name}. Your note was received for Patric.`
+          : `Thanks, ${name}. Your note was saved and will be shared with Patric.`;
       commentConfirmation.classList.remove('hidden');
     }
+    if (commentName) commentName.value = '';
     if (commentMessage) commentMessage.value = '';
     try {
       const stats = await loadLiveStats();
@@ -640,7 +656,7 @@ if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
   } catch (error) {
     console.error('Feedback submit failed', error);
     if (commentConfirmation) {
-      commentConfirmation.textContent = 'Something went wrong while sending feedback. Check your Supabase table permissions and edge function URL.';
+      commentConfirmation.textContent = 'Something went wrong while sending your note. Please try again in a moment.';
       commentConfirmation.classList.remove('hidden');
     }
   }

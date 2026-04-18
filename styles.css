@@ -1804,3 +1804,45 @@ html {
 .live-stats-status.error {
   color: #ff9aa5;
 }
+
+
+/* vNext layout + feedback polish */
+.center-prompt,
+.title-card {
+  top: 44%;
+}
+
+@media (max-height: 850px) {
+  .center-prompt,
+  .title-card {
+    top: 42%;
+  }
+}
+
+.comment-input,
+.comment-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.comment-input {
+  margin-top: 10px;
+  height: 54px;
+  border-radius: 16px;
+  padding: 0 16px;
+}
+
+.comment-input:focus,
+.comment-textarea:focus {
+  border-color: rgba(0,216,255,0.45);
+  box-shadow: 0 0 0 1px rgba(0,216,255,0.16), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.comment-panel p {
+  max-width: 980px;
+}
