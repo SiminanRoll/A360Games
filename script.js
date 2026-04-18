@@ -359,6 +359,63 @@ function chord(freqs, options = {}) {
   freqs.forEach((f, i) => tone({ ...options, frequency: f, delay: (options.delay || 0) + i * 0.02 }));
 }
 
+function playEnterGameSound() {
+  chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
+}
+
+function playVictorySong() {
+  chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
+  tone({ frequency: 196, type: 'sine', duration: 0.12, gain: 0.02, delay: 0.00 });
+  tone({ frequency: 196, type: 'sine', duration: 0.12, gain: 0.018, delay: 0.42 });
+  chord([494, 587, 740], { type: 'triangle', duration: 0.28, gain: 0.02, delay: 0.22 });
+  chord([523, 659, 784], { type: 'triangle', duration: 0.32, gain: 0.022, delay: 0.72 });
+  tone({ frequency: 262, type: 'sine', duration: 0.14, gain: 0.018, delay: 1.04 });
+  chord([587, 740, 880], { type: 'triangle', duration: 0.48, gain: 0.022, delay: 1.18 });
+}
+
+function playLoseSong() {
+  tone({ frequency: 174, type: 'triangle', duration: 0.28, gain: 0.018, delay: 0.00 });
+  tone({ frequency: 146, type: 'triangle', duration: 0.30, gain: 0.018, delay: 0.30 });
+  tone({ frequency: 130, type: 'triangle', duration: 0.42, gain: 0.018, delay: 0.62 });
+  tone({ frequency: 98, type: 'sine', duration: 0.10, gain: 0.014, delay: 0.12 });
+  tone({ frequency: 98, type: 'sine', duration: 0.10, gain: 0.012, delay: 0.54 });
+}
+
+function playFinalSong() {
+  if (totalCorrect === QUESTIONS.length) {
+    playVictorySong();
+    return;
+  }
+  if (totalCorrect === 0) {
+    playLoseSong();
+    return;
+  }
+  playEnterGameSound();
+}
+
+function initGameBubbles() {
+  const bubbleField = document.getElementById('gameBubbles');
+  if (!bubbleField || bubbleField.dataset.ready === 'true') return;
+
+  for (let i = 0; i < 12; i += 1) {
+    const bubble = document.createElement('span');
+    bubble.className = 'game-bubble';
+    const size = 8 + Math.random() * 18;
+    const left = 4 + Math.random() * 92;
+    const drift = -18 + Math.random() * 36;
+    const duration = 10 + Math.random() * 9;
+    const delay = Math.random() * 9;
+    bubble.style.setProperty('--size', `${size}px`);
+    bubble.style.setProperty('--left', `${left}%`);
+    bubble.style.setProperty('--drift', `${drift}px`);
+    bubble.style.setProperty('--duration', `${duration}s`);
+    bubble.style.setProperty('--delay', `-${delay}s`);
+    bubbleField.appendChild(bubble);
+  }
+
+  bubbleField.dataset.ready = 'true';
+}
+
 
 function setControlCopy(text) {
   if (controlCopy) controlCopy.textContent = text;
@@ -475,8 +532,9 @@ function showGame() {
   experience.classList.add('hidden');
   gameScreen.classList.remove('hidden');
   gameScreen.classList.add('show');
+  initGameBubbles();
   loadQuestion(0);
-  chord([330, 440, 554], { type: 'triangle', duration: 0.5, gain: 0.018 });
+  playEnterGameSound();
 }
 
 function loadQuestion(index) {
@@ -567,7 +625,7 @@ async function showFinalScreen() {
 
   questionStage.classList.add('hidden');
   finalStage.classList.remove('hidden');
-  chord([392, 494, 587], { type: 'triangle', duration: 0.6, gain: 0.02 });
+  playFinalSong();
 
   try {
     await submitQuizResult();

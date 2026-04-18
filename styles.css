@@ -1247,7 +1247,7 @@ button { font: inherit; }
 
 .intro-center {
   left: 50%;
-  top: 44%;
+  top: 37%;
   transform: translate(-50%, -50%);
   text-align: center;
   width: min(560px, calc(100vw - 48px));
@@ -1560,7 +1560,7 @@ button { font: inherit; }
 
 .intro-center {
   left: 50%;
-  top: 44%;
+  top: 37%;
   transform: translate(-50%, -50%) !important;
   margin: 0;
   text-align: center;
@@ -1787,6 +1787,58 @@ html {
 }
 
 
+.game-bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.game-bubble {
+  position: absolute;
+  bottom: -8%;
+  width: var(--size, 12px);
+  height: var(--size, 12px);
+  left: var(--left, 50%);
+  border-radius: 50%;
+  border: 1px solid rgba(170, 235, 255, 0.16);
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.14), rgba(0,216,255,0.03) 55%, rgba(123,97,255,0.02) 100%);
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.05), 0 0 14px rgba(0,216,255,0.05);
+  opacity: 0.16;
+  animation: gameBubbleRise var(--duration, 14s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.game-bubble::after {
+  content: "";
+  position: absolute;
+  inset: 18% 18% auto auto;
+  width: 20%;
+  height: 20%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+}
+
+@keyframes gameBubbleRise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.9);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.12;
+  }
+  50% {
+    transform: translate3d(var(--drift, 10px), -46vh, 0) scale(1);
+    opacity: 0.16;
+  }
+  100% {
+    transform: translate3d(calc(var(--drift, 10px) * -0.6), -96vh, 0) scale(1.06);
+    opacity: 0;
+  }
+}
+
+
 .live-stats-status {
   margin: 8px 0 18px;
   color: var(--muted);
@@ -1809,13 +1861,13 @@ html {
 /* vNext layout + feedback polish */
 .center-prompt,
 .title-card {
-  top: 44%;
+  top: 37%;
 }
 
 @media (max-height: 850px) {
   .center-prompt,
   .title-card {
-    top: 42%;
+    top: 35%;
   }
 }
 
