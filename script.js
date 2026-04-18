@@ -28,6 +28,8 @@ const finalStage = document.getElementById('finalStage');
 const finalHeadline = document.getElementById('finalHeadline');
 const finalSummary = document.getElementById('finalSummary');
 const finalScore = document.getElementById('finalScore');
+const leaveFeedbackBtn = document.getElementById('leaveFeedbackBtn');
+const feedbackSection = document.getElementById('feedbackSection');
 const typicalScore = document.getElementById('typicalScore');
 const finalScorePill = document.getElementById('finalScorePill');
 const aggregateChart = document.getElementById('aggregateChart');
@@ -431,28 +433,103 @@ function clearNotifications() {
     notifyInterval = null;
   }
 }
+
 function spawnNotificationBubble() {
   if (!notificationField) return;
-  const templates = [notifyTemplateA, notifyTemplateB, notifyTemplateC].filter(Boolean);
+
+  const templates = [
+    { key: 'A', el: notifyTemplateA },
+    { key: 'B', el: notifyTemplateB },
+    { key: 'C', el: notifyTemplateC }
+  ].filter((item) => item.el);
+
   if (!templates.length) return;
-  const template = templates[Math.floor(Math.random() * templates.length)];
-  const clone = template.cloneNode(true);
+
+  const visibleKeys = new Set(
+    Array.from(notificationField.querySelectorAll('.notify-card.live'))
+      .map((el) => el.dataset.templateKey)
+      .filter(Boolean)
+  );
+
+  if (!window.__spotLastNotifyKey) window.__spotLastNotifyKey = null;
+
+  let pool = templates.filter((item) => !visibleKeys.has(item.key) && item.key !== window.__spotLastNotifyKey);
+  if (!pool.length) pool = templates.filter((item) => !visibleKeys.has(item.key));
+  if (!pool.length) pool = templates;
+
+  const selected = pool[Math.floor(Math.random() * pool.length)];
+  window.__spotLastNotifyKey = selected.key;
+
+  const clone = selected.el.cloneNode(true);
   clone.removeAttribute('id');
   clone.classList.add('live');
-  const maxLeft = window.innerWidth - 280;
-  const maxTop = window.innerHeight - 180;
-  const x = Math.max(24, Math.floor(Math.random() * Math.max(80, maxLeft)));
-  const y = Math.max(90, Math.floor(Math.random() * Math.max(160, maxTop)));
+  clone.dataset.templateKey = selected.key;
+
+  const cardW = window.innerWidth <= 900 ? 220 : 250;
+  const cardH = window.innerWidth <= 900 ? 80 : 90;
+  const pad = 26;
+
+  const blockers = Array.from(document.querySelectorAll('.intro-center, .caption, .center-prompt, .title-card'))
+    .filter((el) => el && el.offsetParent !== null)
+    .map((el) => el.getBoundingClientRect());
+
+  function overlaps(x, y) {
+    const r = { left: x, top: y, right: x + cardW, bottom: y + cardH };
+    return blockers.some((b) => !(r.right < b.left - 18 || r.left > b.right + 18 || r.bottom < b.top - 18 || r.top > b.bottom + 18));
+  }
+
+  const zones = [
+    { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
+    { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
+    { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) },
+    { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) }
+  ];
+
+  let x = pad;
+  let y = 100;
+  let placed = false;
+
+  for (let i = 0; i < 20; i += 1) {
+    const zone = zones[Math.floor(Math.random() * zones.length)];
+    const xr = Math.max(1, zone.xMax - zone.xMin);
+    const yr = Math.max(1, zone.yMax - zone.yMin);
+    const cx = Math.floor(zone.xMin + Math.random() * xr);
+    const cy = Math.floor(zone.yMin + Math.random() * yr);
+    if (!overlaps(cx, cy)) {
+      x = cx;
+      y = cy;
+      placed = true;
+      break;
+    }
+  }
+
   clone.style.left = `${x}px`;
   clone.style.top = `${y}px`;
   notificationField.appendChild(clone);
-  setTimeout(() => clone.remove(), 2200);
+  setTimeout(() => clone.remove(), 3800);
 }
+
+
+/* JS patch marker */
+function getVisibleIntroBlockers() {
+  return Array.from(document.querySelectorAll('.intro-center, .scene-2 .caption.right, .scene-3 .center-prompt, .scene-4 .title-card, .caption, .center-prompt, .title-card'))
+    .filter((el) => el && el.offsetParent !== null)
+    .map((el) => el.getBoundingClientRect());
+}
+
+function pointHitsBlocker(x, y, w, h, blockers) {
+  const rect = { left: x, top: y, right: x + w, bottom: y + h };
+  return blockers.some((b) => !(rect.right < b.left - 14 || rect.left > b.right + 14 || rect.bottom < b.top - 14 || rect.top > b.bottom + 14));
+}
+
+
 function startNotificationBubbles() {
   clearNotifications();
   spawnNotificationBubble();
-  notifyInterval = setInterval(spawnNotificationBubble, 900);
+  if (notifyInterval) clearInterval(notifyInterval);
+  notifyInterval = setInterval(spawnNotificationBubble, 1800);
 }
+
 
 function activateScene(index) {
   if (index > scenes.length - 1) return;
@@ -643,6 +720,28 @@ async function showFinalScreen() {
   }
 }
 
+function scrollToFeedbackSection() {
+  if (!feedbackSection) return;
+
+  const scrollContainer = finalStage && finalStage.scrollHeight > finalStage.clientHeight
+    ? finalStage
+    : document.scrollingElement || document.documentElement;
+
+  const containerRect = scrollContainer.getBoundingClientRect ? scrollContainer.getBoundingClientRect() : { top: 0 };
+  const sectionRect = feedbackSection.getBoundingClientRect();
+  const currentTop = scrollContainer.scrollTop || 0;
+  const targetTop = currentTop + (sectionRect.top - containerRect.top) - 20;
+
+  scrollContainer.scrollTo({
+    top: Math.max(targetTop, 0),
+    behavior: 'smooth'
+  });
+
+  window.setTimeout(() => {
+    if (commentName) commentName.focus({ preventScroll: true });
+  }, 350);
+}
+
 function restartGame() {
   currentQuestion = 0;
   answered = false;
@@ -668,6 +767,7 @@ if (nextBtn) nextBtn.addEventListener('click', () => {
 });
 if (restartBtn) restartBtn.addEventListener('click', restartGame);
 if (restartFromFinalBtn) restartFromFinalBtn.addEventListener('click', restartGame);
+if (leaveFeedbackBtn) leaveFeedbackBtn.addEventListener('click', scrollToFeedbackSection);
 if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
   const name = commentName ? commentName.value.trim() : '';
   const message = commentMessage ? commentMessage.value.trim() : '';
@@ -720,6 +820,32 @@ if (submitCommentBtn) submitCommentBtn.addEventListener('click', async () => {
   }
 });
 
+
+const themeToggle = document.getElementById('themeToggle');
+
+function getSystemTheme() {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.documentElement.classList.toggle('light', isLight);
+  document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+  if (themeToggle) {
+    themeToggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+    themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+  }
+}
+
+applyTheme(getSystemTheme());
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    const nextTheme = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+    applyTheme(nextTheme);
+  });
+}
+
 window.addEventListener('pointerdown', async () => {
   const ctx = initAudio();
   if (ctx?.state === 'suspended') await ctx.resume();
@@ -733,3 +859,125 @@ swimFish(introPhish, 70);
 swimFish(gamePhish, 15);
 
 activateScene(0);
+
+
+(function () {
+  function syncViewportMode() {
+    document.documentElement.classList.toggle('is-mobile-intro', window.innerWidth <= 900);
+  }
+  syncViewportMode();
+  window.addEventListener('resize', syncViewportMode, { passive: true });
+})();
+
+
+let lastNotificationTemplateKey = null;
+
+
+
+/* === REAL FIX: bubbles restore + safe intro click === */
+(function () {
+  let __spotLastKey = null;
+
+  function fixedSpawnNotificationBubble() {
+    if (!notificationField) return;
+
+    const templates = [
+      { key: 'A', el: notifyTemplateA },
+      { key: 'B', el: notifyTemplateB },
+      { key: 'C', el: notifyTemplateC }
+    ].filter((item) => item.el);
+
+    if (!templates.length) return;
+
+    const visibleKeys = new Set(
+      Array.from(notificationField.querySelectorAll('.notify-card.live'))
+        .map((el) => el.dataset.templateKey)
+        .filter(Boolean)
+    );
+
+    let pool = templates.filter((item) => !visibleKeys.has(item.key) && item.key !== __spotLastKey);
+    if (!pool.length) pool = templates.filter((item) => !visibleKeys.has(item.key));
+    if (!pool.length) pool = templates;
+
+    const selected = pool[Math.floor(Math.random() * pool.length)];
+    __spotLastKey = selected.key;
+
+    const clone = selected.el.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('live');
+    clone.dataset.templateKey = selected.key;
+
+    const cardW = window.innerWidth <= 900 ? 220 : 250;
+    const cardH = window.innerWidth <= 900 ? 80 : 90;
+    const pad = 28;
+
+    const blockers = Array.from(document.querySelectorAll('.intro-center, .caption, .center-prompt, .title-card'))
+      .filter((el) => el && el.offsetParent !== null)
+      .map((el) => el.getBoundingClientRect());
+
+    function overlaps(x, y) {
+      const r = { left: x, top: y, right: x + cardW, bottom: y + cardH };
+      return blockers.some((b) => !(r.right < b.left - 18 || r.left > b.right + 18 || r.bottom < b.top - 18 || r.top > b.bottom + 18));
+    }
+
+    const zones = [
+      { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
+      { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: 90, yMax: Math.max(110, window.innerHeight * 0.28) },
+      { xMin: pad, xMax: Math.max(pad, window.innerWidth * 0.22), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) },
+      { xMin: Math.max(pad, window.innerWidth * 0.78), xMax: Math.max(window.innerWidth * 0.78, window.innerWidth - cardW - pad), yMin: Math.max(110, window.innerHeight * 0.62), yMax: Math.max(120, window.innerHeight - cardH - 90) }
+    ];
+
+    let x = pad;
+    let y = 100;
+    let placed = false;
+
+    for (let i = 0; i < 20; i++) {
+      const zone = zones[Math.floor(Math.random() * zones.length)];
+      const xr = Math.max(1, zone.xMax - zone.xMin);
+      const yr = Math.max(1, zone.yMax - zone.yMin);
+      const cx = Math.floor(zone.xMin + Math.random() * xr);
+      const cy = Math.floor(zone.yMin + Math.random() * yr);
+      if (!overlaps(cx, cy)) {
+        x = cx;
+        y = cy;
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) {
+      x = pad;
+      y = 100;
+    }
+
+    clone.style.left = `${x}px`;
+    clone.style.top = `${y}px`;
+    notificationField.appendChild(clone);
+    setTimeout(() => clone.remove(), 3800);
+  }
+
+  function fixedStartNotificationBubbles() {
+    if (typeof clearNotifications === 'function') clearNotifications();
+    fixedSpawnNotificationBubble();
+    if (typeof notifyInterval !== 'undefined' && notifyInterval) clearInterval(notifyInterval);
+    notifyInterval = setInterval(fixedSpawnNotificationBubble, 1800);
+  }
+
+  const originalActivateScene = typeof activateScene === 'function' ? activateScene : null;
+  if (originalActivateScene) {
+    activateScene = function(index) {
+      originalActivateScene(index);
+      if (index === 0) fixedStartNotificationBubbles();
+    };
+  }
+
+  document.addEventListener('pointerdown', async function safeIntroStart() {
+    if (typeof initAudio === 'function') {
+      const ctx = initAudio();
+      if (ctx && ctx.state === 'suspended') await ctx.resume();
+    }
+    if (typeof introStarted !== 'undefined' && typeof introDone !== 'undefined' && !introStarted && !introDone && typeof beginIntroSequence === 'function') {
+      beginIntroSequence();
+    }
+  }, { once: true });
+})();
